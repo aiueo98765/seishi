@@ -676,7 +676,7 @@ function reset(){
   camX=0;camY=0;camZ=p.z-CAM_BACK;shake=0;
   g.t=0;g.pass=0;g.food=0;g.hits=0;g.drill=0;g.rival=0;g.eggT=0;g.cells=1;
   g.cause='';g.acc=0;g.miss=0;g.tired=false;g.saidEnd=false;
-  g.flowN=0;g.wallN=0;g.cellN=0;g.mark=0;g.land=0;g.boom=0;g.fertT=0;
+  g.flowN=0;g.wallN=0;g.cellN=0;g.mark=0;g.land=0;g.boom=0;g.fertT=0;g.hold=false;
   g.lastWall=-9;g.lastHit=-9;g.mashLock=false;
   /* time がここで 0 に戻るので、time を見ている送信タイマーも戻す。
      戻し忘れると再戦のあいだ位置を送らず、相手が止まって見える */
@@ -855,6 +855,7 @@ function startLanding(px,py){
   toastT=0; $('toast').style.opacity=0; $('sub2').style.opacity=0;
 }
 function updateLand(dt){
+  if(g.hold) return;                 /* 画像を撮るとき用に、その瞬間で止める */
   time+=dt; g.land+=dt; g.t+=dt;
   const t=g.land;
   p.x=lerp(p.x,g.px,1-Math.pow(0.03,dt));
@@ -2061,6 +2062,21 @@ requestAnimationFrame(loop);
 window.__seishi=window.__swim={
   jump:function(z){ p.z=z; spawnZ=Math.max(spawnZ,z+12); ents.length=0; },
   heal:function(){ p.hp=100; p.st=100; },
+  /* 着床の瞬間で止めて、絵として撮れるようにする。t は演出の秒数（既定 2.4） */
+  shot:function(t){
+    const t2=tube(IMPLANT_Z);
+    g.px=t2.x+Math.cos(PATCH_A)*t2.r*PATCH_RR;
+    g.py=t2.y+Math.sin(PATCH_A)*t2.r*PATCH_RR;
+    p.x=g.px; p.y=g.py; p.z=IMPLANT_Z+1.15; g.cells=32;
+    camX=g.px; camY=g.py-0.25; camZ=p.z-CAM_BACK*0.55;
+    state='land'; g.land=(t==null?2.4:t); g.boom=1; g.hold=true;
+    flashWhite=0; shake=0; parts.length=0; ents.length=0;
+    $('hud').classList.remove('on'); $('qte').classList.remove('on');
+    $('pads').classList.remove('on'); $('mct').innerHTML=''; toastT=0;
+    $('toast').style.opacity=0; $('sub2').style.opacity=0;
+    return g.land;
+  },
+  release:function(){ g.hold=false; },
   finale:function(){
     const t2=tube(IMPLANT_Z);
     state='embryo'; g.cells=32; g.saidEnd=true; p.z=IMPLANT_Z-3; p.spd=14;
