@@ -1,0 +1,1168 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>SEISHI — 着床までの旅</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{width:100%;height:100%;overflow:hidden;background:#07030a;
+    font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",system-ui,sans-serif;
+    color:#ffe9ee;user-select:none;touch-action:none}
+  #wrap{position:fixed;inset:0}
+  #cv{position:absolute;inset:0;width:100%;height:100%;display:block}
+
+  /* ---- HUD ---- */
+  #hud{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .4s}
+  #hud.on{opacity:1}
+  .topbar{position:absolute;left:0;right:0;top:0;padding:12px 14px 18px;
+    background:linear-gradient(#000000aa,#0000)}
+  .stageline{display:flex;align-items:baseline;gap:10px;text-shadow:0 2px 8px #000}
+  #stName{font-size:17px;font-weight:700;letter-spacing:.08em}
+  #stSub{font-size:11px;opacity:.72;letter-spacing:.06em}
+  #prog{margin-top:8px;height:4px;background:#ffffff1f;border-radius:4px;overflow:hidden}
+  #progF{height:100%;width:0;background:linear-gradient(90deg,#ff5f8a,#ffd6a0);
+    box-shadow:0 0 10px #ff5f8a99;transition:width .18s linear}
+  #ticks{position:relative;height:12px;margin-top:3px}
+  #ticks i{position:absolute;top:0;font-size:9px;opacity:.45;transform:translateX(-50%);white-space:nowrap}
+
+  .bars{position:absolute;left:14px;bottom:16px;width:min(40vw,210px)}
+  .bar{position:relative;height:13px;margin-top:7px;background:#00000066;
+    border:1px solid #ffffff26;border-radius:7px;overflow:hidden}
+  .bar i{position:absolute;inset:0;width:50%;border-radius:6px;transition:width .1s linear}
+  .bar b{position:absolute;left:8px;top:0;line-height:13px;font-size:9px;font-weight:700;
+    letter-spacing:.12em;text-shadow:0 1px 2px #000}
+  #hpF{background:linear-gradient(90deg,#ff3b5c,#ff8a6a)}
+  #stF{background:linear-gradient(90deg,#39d6ff,#9affd0)}
+
+  #rightInfo{position:absolute;right:14px;top:88px;text-align:right;
+    font-variant-numeric:tabular-nums;text-shadow:0 2px 6px #000}
+  #rightInfo div{font-size:10px;opacity:.6;letter-spacing:.1em;margin-top:6px}
+  #rightInfo span{font-size:16px;font-weight:700;opacity:1;letter-spacing:0}
+  #toast{position:absolute;left:0;right:0;top:34%;text-align:center;font-size:clamp(18px,5vw,34px);
+    font-weight:800;letter-spacing:.1em;opacity:0;text-shadow:0 0 24px #000,0 2px 6px #000;
+    transition:opacity .25s}
+  #sub2{position:absolute;left:0;right:0;top:calc(34% + 42px);text-align:center;font-size:12px;
+    letter-spacing:.14em;opacity:0;transition:opacity .25s;text-shadow:0 2px 6px #000}
+
+  /* ---- egg QTE ---- */
+  #qte{position:absolute;left:50%;bottom:22%;transform:translateX(-50%);width:min(78vw,420px);
+    opacity:0;transition:opacity .3s;pointer-events:none}
+  #qte.on{opacity:1}
+  #qte .lab{font-size:11px;letter-spacing:.16em;opacity:.8;margin-bottom:6px;text-align:center}
+  #qte .g{position:relative;height:16px;background:#00000080;border:1px solid #ffffff33;
+    border-radius:9px;overflow:hidden;margin-bottom:6px}
+  #qte .g i{position:absolute;inset:0;width:0}
+  #drillF{background:linear-gradient(90deg,#ffd166,#fff4c2);box-shadow:0 0 14px #ffd16688}
+  #rivF{background:linear-gradient(90deg,#7a8390,#c3ccd6)}
+  #qte .mash{text-align:center;font-size:13px;font-weight:800;letter-spacing:.12em;margin-top:8px;
+    animation:pulse .5s infinite alternate}
+  @keyframes pulse{to{transform:scale(1.08);opacity:.6}}
+
+  /* ---- screens ---- */
+  .screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;
+    justify-content:center;text-align:center;padding:26px;
+    background:radial-gradient(ellipse at 50% 40%,#2a0613cc,#05020aee 72%)}
+  .screen.on{display:flex}
+  h1{font-size:clamp(30px,9vw,62px);font-weight:900;letter-spacing:.04em;line-height:1;
+    background:linear-gradient(#fff,#ff8fb0 60%,#ff3b6b);-webkit-background-clip:text;
+    background-clip:text;color:transparent;filter:drop-shadow(0 4px 18px #ff2b5c55)}
+  h2{font-size:clamp(22px,6vw,40px);font-weight:900;letter-spacing:.06em;margin-bottom:6px}
+  .tag{font-size:11px;letter-spacing:.3em;opacity:.65;margin-bottom:14px}
+  .lead{font-size:13px;line-height:2;opacity:.85;max-width:430px;margin:14px auto 4px}
+  .keys{margin:18px auto 6px;display:grid;grid-template-columns:auto auto;gap:7px 14px;
+    font-size:12px;max-width:380px;text-align:left}
+  .keys b{background:#ffffff14;border:1px solid #ffffff2e;border-radius:6px;padding:3px 9px;
+    font-size:11px;font-weight:700;letter-spacing:.06em;white-space:nowrap;text-align:center}
+  .keys span{opacity:.82;align-self:center}
+  .btn{margin-top:22px;pointer-events:auto;cursor:pointer;border:none;border-radius:999px;
+    padding:15px 44px;font-size:15px;font-weight:800;letter-spacing:.14em;color:#2a0410;
+    background:linear-gradient(#fff2f5,#ffb0c4);box-shadow:0 8px 28px #ff356b55;
+    font-family:inherit}
+  .btn:active{transform:translateY(2px)}
+  .btn.ghost{background:#ffffff14;color:#ffe9ee;border:1px solid #ffffff33;box-shadow:none;
+    padding:11px 26px;font-size:12px;margin-top:12px}
+  .res{margin:16px auto 2px;display:grid;grid-template-columns:auto auto;gap:6px 18px;
+    font-size:13px;font-variant-numeric:tabular-nums}
+  .res i{opacity:.6;font-style:normal;font-size:11px;letter-spacing:.1em;text-align:right;
+    align-self:center}
+  .res b{text-align:left;font-weight:700}
+  #rank{font-size:clamp(54px,16vw,96px);font-weight:900;line-height:1;margin:6px 0 2px;
+    background:linear-gradient(#fffbe8,#ffd166 55%,#ff8a3d);-webkit-background-clip:text;
+    background-clip:text;color:transparent;filter:drop-shadow(0 4px 16px #ffb03d66)}
+  .note{font-size:11px;opacity:.5;margin-top:16px;letter-spacing:.08em;line-height:1.9}
+
+  /* ---- mobile pads ---- */
+  #pads{position:absolute;inset:0;display:none}
+  #pads.on{display:block}
+  #dashBtn{position:absolute;right:16px;bottom:88px;width:92px;height:92px;border-radius:50%;
+    border:2px solid #ffffff3d;background:#ff3b6b2e;backdrop-filter:blur(2px);
+    display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;
+    letter-spacing:.1em;pointer-events:auto}
+  #dashBtn.hit{background:#ff3b6b70;transform:scale(.94)}
+  @media (hover:hover) and (pointer:fine){#dashBtn{display:none}}
+  #iconBtns{position:absolute;right:12px;top:12px;display:flex;gap:8px;pointer-events:auto}
+  #iconBtns button{width:34px;height:34px;border-radius:9px;border:1px solid #ffffff2b;
+    background:#00000055;color:#ffe9ee;font-size:13px;font-family:inherit;cursor:pointer}
+  #vig{position:absolute;inset:0;pointer-events:none;opacity:0;
+    background:radial-gradient(ellipse at 50% 50%,#0000 42%,#ff0b3bbb 100%);
+    transition:opacity .2s}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="cv"></canvas>
+  <div id="vig"></div>
+
+  <div id="hud">
+    <div class="topbar">
+      <div class="stageline"><span id="stName">膣内</span><span id="stSub"></span></div>
+      <div id="prog"><i id="progF"></i></div>
+      <div id="ticks"></div>
+    </div>
+    <div class="bars">
+      <div class="bar"><i id="hpF"></i><b>たいりょく</b></div>
+      <div class="bar"><i id="stF"></i><b>スタミナ</b></div>
+    </div>
+    <div id="rightInfo">
+      <div>きょり <span id="iDist">0.0</span>cm</div>
+      <div>ライバル <span id="iRival">3億</span></div>
+      <div>ぬいた <span id="iPass">0</span></div>
+    </div>
+    <div id="toast"></div>
+    <div id="sub2"></div>
+    <div id="qte">
+      <div class="lab">卵膜（透明帯）をこじ開けろ</div>
+      <div class="g"><i id="drillF"></i></div>
+      <div class="g"><i id="rivF"></i></div>
+      <div class="lab" style="margin:4px 0 0">ライバルの進捗</div>
+      <div class="mash" id="mashLab">スペース／画面を連打！</div>
+    </div>
+  </div>
+
+  <div id="pads">
+    <div id="iconBtns">
+      <button id="bMute" title="音">♪</button>
+      <button id="bPause" title="一時停止">❙❙</button>
+    </div>
+    <div id="dashBtn">DASH</div>
+  </div>
+
+  <div class="screen on" id="scTitle">
+    <div class="tag">A LONG SWIM TO LIFE</div>
+    <h1>SEISHI</h1>
+    <div class="tag" style="margin-top:12px">— 着床までの旅 —</div>
+    <p class="lead">きみは3億分の1の精子。<br>
+      酸の海、粘液の迷路、白血球の縄張りを抜け、<br>
+      卵子に辿り着き、そして子宮内膜へ。<br>
+      <b>止まることは許されない。</b></p>
+    <div class="keys">
+      <b>← → ↑ ↓ / WASD</b><span>泳ぐ向きを変える</span>
+      <b>SPACE 長押し</b><span>全力スイム（スタミナを使う）</span>
+      <b>スワイプ</b><span>向きを変える（スマホ）</span>
+      <b>P / ESC</b><span>一時停止　　<b style="padding:1px 6px">M</b> 音</span>
+    </div>
+    <button class="btn" id="bStart">泳ぎ出す</button>
+    <p class="note">壁への激突・白血球・酸はダメージ。果糖でスタミナ回復。<br>カメラは常に真後ろ（視点移動なし）。</p>
+  </div>
+
+  <div class="screen" id="scOver">
+    <div class="tag">GAME OVER</div>
+    <h2 id="overTitle">力尽きた</h2>
+    <p class="lead" id="overMsg"></p>
+    <div class="res">
+      <i>とうたつ</i><b id="oDist">0.0 cm</b>
+      <i>ぬいたライバル</i><b id="oPass">0</b>
+      <i>タイム</i><b id="oTime">0:00</b>
+    </div>
+    <button class="btn" id="bRetry">もう一度泳ぐ</button>
+    <button class="btn ghost" id="bTitle1">タイトルへ</button>
+  </div>
+
+  <div class="screen" id="scClear">
+    <div class="tag">IMPLANTATION COMPLETE</div>
+    <h2>着床成功</h2>
+    <div id="rank">S</div>
+    <p class="lead" id="clearMsg">ここから、ぜんぶが始まる。</p>
+    <div class="res">
+      <i>タイム</i><b id="cTime">0:00</b>
+      <i>ぬいたライバル</i><b id="cPass">0</b>
+      <i>被弾</i><b id="cHit">0</b>
+      <i>残り体力</i><b id="cHp">0</b>
+      <i>ベスト</i><b id="cBest">—</b>
+    </div>
+    <button class="btn" id="bAgain">もう一度泳ぐ</button>
+    <button class="btn ghost" id="bTitle2">タイトルへ</button>
+  </div>
+
+  <div class="screen" id="scPause">
+    <div class="tag">PAUSED</div>
+    <h2>ひと休み</h2>
+    <p class="lead">精子は止まったら終わりだが、<br>きみは少しだけ休んでいい。</p>
+    <button class="btn" id="bResume">続ける</button>
+    <button class="btn ghost" id="bGiveUp">やめる</button>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ===================== 基本ユーティリティ ===================== */
+const TAU = Math.PI*2;
+const clamp=(v,a,b)=>v<a?a:(v>b?b:v);
+const lerp=(a,b,t)=>a+(b-a)*t;
+const rnd=(a,b)=>a+Math.random()*(b-a);
+function hex2rgb(h){return [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];}
+function mix(a,b,t){return [a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t];}
+function rgb(c){return 'rgb('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+')';}
+function rgba(c,a){return 'rgba('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+','+a+')';}
+function hash(a,b){let h=Math.imul(a|0,374761393)^Math.imul(b|0,668265263);
+  h=Math.imul(h^(h>>>13),1274126177);return ((h^(h>>>16))>>>0)/4294967296;}
+
+const $=id=>document.getElementById(id);
+const cv=$('cv'), ctx=cv.getContext('2d',{alpha:false});
+let W=0,H=0,DPR=1,FOV=900,SEG=16;
+
+function resize(){
+  DPR=Math.min(2,window.devicePixelRatio||1);
+  W=cv.clientWidth||window.innerWidth; H=cv.clientHeight||window.innerHeight;
+  cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  FOV=Math.min(W,H)*1.02;
+  SEG = W<520 ? 12 : (W<900 ? 14 : 16);
+}
+window.addEventListener('resize',resize);
+
+/* ===================== ステージ定義 ===================== */
+const ALL=[
+ {name:'膣内', sub:'酸の海を抜けろ', end:420, R:5.4, wind:1.00,
+  wall:'#5b1322', lit:'#c8415a', fog:'#1a0409',
+  dens:{acid:1.10, clot:.35, cell:0, rival:1.10, food:.40, flow:.14}},
+ {name:'子宮頸管', sub:'粘液の迷路', end:1020, R:3.9, wind:1.65,
+  wall:'#5b4116', lit:'#dcac45', fog:'#170f04',
+  dens:{acid:.25, clot:1.25, cell:.20, rival:.85, food:.50, flow:.12}},
+ {name:'子宮腔', sub:'白血球の縄張り', end:1760, R:8.4, wind:1.10,
+  wall:'#5f1c34', lit:'#e47c9a', fog:'#1d0613',
+  dens:{acid:.12, clot:.40, cell:1.15, rival:.60, food:.45, flow:.18}},
+ {name:'卵管', sub:'繊毛の逆流', end:2400, R:4.4, wind:1.95,
+  wall:'#5e2918', lit:'#f2a477', fog:'#1c0804',
+  dens:{acid:.22, clot:.75, cell:.50, rival:.45, food:.55, flow:.32}},
+ /* --- 受精後 --- */
+ {name:'卵管（帰路）', sub:'胚として子宮へ運ばれる', end:2760, R:4.8, wind:1.50,
+  wall:'#512c23', lit:'#e6ab92', fog:'#150705',
+  dens:{acid:0, clot:.55, cell:.14, rival:0, food:.35, flow:.55}},
+ {name:'子宮内膜', sub:'着床の窓がひらく', end:3140, R:7.8, wind:.85,
+  wall:'#6d1d30', lit:'#f48ea4', fog:'#21060e',
+  dens:{acid:0, clot:.30, cell:0, rival:0, food:.35, flow:.45}}
+];
+ALL.forEach(s=>{s.cw=hex2rgb(s.wall);s.cl=hex2rgb(s.lit);s.cf=hex2rgb(s.fog);});
+const EGG_Z=2400, IMPLANT_Z=ALL[ALL.length-1].end;
+const TOTAL_CM=20;                 // 実際の旅はおよそ20cm
+const PATCH_A=1.08, PATCH_RR=0.50, PATCH_HIT=0.46;
+
+function idxAt(z){for(let i=0;i<ALL.length;i++) if(z<ALL[i].end) return i; return ALL.length-1;}
+function blendP(a,b,t){return {R:lerp(a.R,b.R,t),wind:lerp(a.wind,b.wind,t),
+  cw:mix(a.cw,b.cw,t),cl:mix(a.cl,b.cl,t),cf:mix(a.cf,b.cf,t),
+  name:a.name,sub:a.sub,dens:a.dens,end:a.end};}
+function paramsAt(z){
+  const i=idxAt(z), s=ALL[i], BL=130;
+  if(i>0){const e0=ALL[i-1].end; if(z-e0<BL) return blendP(s,ALL[i-1],0.5*(1-(z-e0)/BL));}
+  if(i<ALL.length-1){const e1=s.end; if(e1-z<BL) return blendP(s,ALL[i+1],0.5*(1-(e1-z)/BL));}
+  return s;
+}
+function tube(z){
+  const s=paramsAt(z);
+  const w=s.wind*Math.sqrt(s.R/5.4);     /* 細い管ほど曲がり幅も小さく */
+  const x=Math.sin(z*0.0115)*3.0*w + Math.sin(z*0.0271+1.7)*1.35*w;
+  const y=Math.cos(z*0.0152+0.6)*2.4*w + Math.sin(z*0.0333+2.2)*1.00*w;
+  const r=s.R*(1+0.085*Math.sin(z*0.052)+0.045*Math.sin(z*0.131+1.1));
+  return {x:x,y:y,r:r,s:s};
+}
+
+/* ===================== 定数（遊びの数値） ===================== */
+const CAM_BACK=7.2, DRAW=46, RSTEP=1.35, PR=0.34;
+const ACC=30, VMAX=6.4, DAMP=0.90;
+const SPD_CRUISE=19, SPD_DASH=34, SPD_TIRED=12;
+const ST_DRAIN=24, ST_REGEN=15;
+const DMG={cell:26, clot:11, acid:16, rival:5, wall:4};
+
+/* ===================== 状態 ===================== */
+let state='title';     // title / swim / egg / embryo / over / clear / pause
+let prevState='swim';
+let time=0, lastT=0;
+const p={x:0,y:0,z:8,vx:0,vy:0,spd:SPD_CRUISE,phase:0,hp:100,st:100,boost:0};
+let camX=0,camY=0,camZ=0,shake=0;
+const g={t:0,pass:0,food:0,hits:0,drill:0,rival:0,eggT:0,cells:1,
+         cause:'',acc:0,lastWall:-9,lastHit:-9,mashLock:false};
+let ents=[], dust=[], parts=[], spawnZ=0;
+let best=null;
+try{ best=JSON.parse(localStorage.getItem('seishi_best')||localStorage.getItem('swim_best')||'null'); }
+catch(e){ best=null; }
+
+/* ===================== 音 ===================== */
+const A={c:null,on:true,hb:0};
+function actx(){ if(!A.c){try{A.c=new (window.AudioContext||window.webkitAudioContext)();}catch(e){A.on=false;}} return A.c; }
+function tone(f,dur,type,vol,f2){
+  if(!A.on) return; const c=actx(); if(!c) return;
+  const o=c.createOscillator(), gn=c.createGain();
+  o.type=type||'sine'; o.frequency.setValueAtTime(f,c.currentTime);
+  if(f2) o.frequency.exponentialRampToValueAtTime(Math.max(20,f2),c.currentTime+dur);
+  gn.gain.setValueAtTime(0,c.currentTime);
+  gn.gain.linearRampToValueAtTime(vol||.2,c.currentTime+0.012);
+  gn.gain.exponentialRampToValueAtTime(0.0008,c.currentTime+dur);
+  o.connect(gn); gn.connect(c.destination); o.start(); o.stop(c.currentTime+dur+0.02);
+}
+let nbuf=null;
+function noise(dur,vol,f,q){
+  if(!A.on) return; const c=actx(); if(!c) return;
+  if(!nbuf){ nbuf=c.createBuffer(1,c.sampleRate*1.2,c.sampleRate);
+    const d=nbuf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1; }
+  const s=c.createBufferSource(); s.buffer=nbuf; s.loop=true;
+  const bp=c.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=f||700; bp.Q.value=q||1.2;
+  const gn=c.createGain();
+  gn.gain.setValueAtTime(0,c.currentTime);
+  gn.gain.linearRampToValueAtTime(vol||.12,c.currentTime+0.02);
+  gn.gain.exponentialRampToValueAtTime(0.0008,c.currentTime+dur);
+  s.connect(bp); bp.connect(gn); gn.connect(c.destination); s.start(); s.stop(c.currentTime+dur+0.02);
+}
+function sfxHeart(){ tone(58,.26,'sine',.26,34); setTimeout(()=>tone(46,.22,'sine',.18,28),170); }
+function sfxSwim(){ noise(.16,.07,520,.9); }
+function sfxHit(){ tone(140,.3,'square',.16,48); noise(.22,.14,240,.8); }
+function sfxPick(){ tone(880,.1,'triangle',.14,1400); tone(1320,.14,'sine',.08,1760); }
+function sfxFlow(){ tone(300,.4,'sine',.1,900); noise(.4,.08,1400,.7); }
+function sfxDrill(){ tone(rnd(300,420),.07,'sawtooth',.09,rnd(500,700)); }
+function sfxWin(){ [523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,.5,'triangle',.16),i*110)); }
+function sfxLose(){ [330,262,196,131].forEach((f,i)=>setTimeout(()=>tone(f,.55,'sine',.16),i*150)); }
+
+/* ===================== 入力 ===================== */
+const keys={};
+let touchSteer=null, dashHold=false;
+window.addEventListener('keydown',e=>{
+  if(e.repeat && e.code==='Space'){ e.preventDefault(); return; }
+  keys[e.code]=true;
+  if(e.code==='Space'){ e.preventDefault(); if(state==='egg') mash(); }
+  if(e.code==='KeyP'||e.code==='Escape'){ togglePause(); }
+  if(e.code==='KeyM'){ A.on=!A.on; $('bMute').style.opacity=A.on?1:.35; }
+  if(e.code==='Enter'){ if(state==='title') start(); else if(state==='over'||state==='clear') start(); }
+},{passive:false});
+window.addEventListener('keyup',e=>{keys[e.code]=false;});
+
+$('wrap').addEventListener('pointerdown',e=>{
+  if(state==='egg'){ mash(); }
+  if(state!=='swim'&&state!=='embryo'&&state!=='egg') return;
+  touchSteer={id:e.pointerId,x:e.clientX,y:e.clientY,ox:e.clientX,oy:e.clientY};
+});
+window.addEventListener('pointermove',e=>{ if(touchSteer&&e.pointerId===touchSteer.id){touchSteer.x=e.clientX;touchSteer.y=e.clientY;} });
+window.addEventListener('pointerup',e=>{ if(touchSteer&&e.pointerId===touchSteer.id) touchSteer=null; });
+window.addEventListener('pointercancel',()=>{touchSteer=null;});
+const db=$('dashBtn');
+db.addEventListener('pointerdown',e=>{e.stopPropagation();dashHold=true;db.classList.add('hit');});
+['pointerup','pointercancel','pointerleave'].forEach(k=>db.addEventListener(k,()=>{dashHold=false;db.classList.remove('hit');}));
+$('bMute').onclick=e=>{e.stopPropagation();A.on=!A.on;$('bMute').style.opacity=A.on?1:.35;};
+$('bPause').onclick=e=>{e.stopPropagation();togglePause();};
+
+function mash(){
+  if(g.mashLock) return;
+  g.drill=Math.min(100,g.drill+2.9); g.mashLock=true; sfxDrill();
+  shake=Math.max(shake,2.5);
+  setTimeout(()=>{g.mashLock=false;},55);
+  burst(W*0.5,H*0.42,6,[255,230,170]);
+}
+
+/* ===================== 投影 ===================== */
+function project(x,y,z){
+  const dz=z-camZ;
+  if(dz<0.3) return null;
+  const s=FOV/dz;
+  return {x:W*0.5+(x-camX)*s, y:H*0.5+(y-camY)*s, s:s, dz:dz};
+}
+
+/* ===================== 画面エフェクト ===================== */
+function burst(x,y,n,col,pow){
+  pow=pow||1;
+  for(let i=0;i<n;i++){
+    const a=Math.random()*TAU, v=rnd(40,260)*pow;
+    parts.push({x:x,y:y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:rnd(.25,.7),
+      max:.7,r:rnd(1.5,4.5),c:col});
+  }
+}
+let toastT=0;
+function toast(msg,sub,dur){
+  $('toast').textContent=msg; $('toast').style.opacity=1;
+  $('sub2').textContent=sub||''; $('sub2').style.opacity=sub?1:0;
+  toastT=dur||1.6;
+}
+
+/* ===================== ダメージ ===================== */
+function damage(v,why){
+  p.hp-=v; g.hits++; g.lastHit=time; shake=Math.max(shake,Math.min(14,v*0.55));
+  sfxHit(); flashV(Math.min(.9,v/26));
+  if(p.hp<=0){ p.hp=0; over(why); }
+}
+let vigT=0;
+function flashV(a){ vigT=Math.max(vigT,a); }
+
+/* ===================== 進行 ===================== */
+function reset(){
+  state='swim'; time=0; lastT=performance.now()/1000;
+  p.x=0;p.y=0;p.z=8;p.vx=0;p.vy=0;p.spd=SPD_CRUISE;p.phase=0;p.hp=100;p.st=100;p.boost=0;
+  camX=0;camY=0;camZ=p.z-CAM_BACK;shake=0;
+  g.t=0;g.pass=0;g.food=0;g.hits=0;g.drill=0;g.rival=0;g.eggT=0;g.cells=1;
+  g.cause='';g.acc=0;g.miss=0;g.tired=false;g.saidEnd=false;
+  g.lastWall=-9;g.lastHit=-9;g.mashLock=false;
+  ents.length=0; parts.length=0; spawnZ=60;
+  dust.length=0;
+  for(let i=0;i<190;i++){
+    const z=p.z+Math.random()*DRAW, t=tube(z), a=Math.random()*TAU, rr=Math.sqrt(Math.random())*t.r*0.96;
+    dust.push({x:t.x+Math.cos(a)*rr,y:t.y+Math.sin(a)*rr,z:z,r:rnd(.02,.075),b:rnd(.25,.9)});
+  }
+}
+function screens(on){
+  ['scTitle','scOver','scClear','scPause'].forEach(id=>$(id).classList.toggle('on',id===on));
+  $('hud').classList.toggle('on', on===null);
+  $('pads').classList.toggle('on', on===null);
+}
+function start(){
+  actx(); reset(); screens(null); buildTicks(); toast('泳げ','3億分の1の旅がはじまる',2.0);
+}
+function over(why){
+  state='over'; g.cause=why||'';
+  $('overTitle').textContent = why==='rival' ? 'ライバルに先を越された' : '力尽きた';
+  $('overMsg').textContent = why==='rival'
+    ? '卵膜をこじ開ける前に、別の精子が中へ。きみの旅はここで終わる。'
+    : (why==='miss' ? '内膜に取りつけず、胚は流れていった。'
+      : '体力が尽きた。無数の精子がそうやって消えていく。');
+  $('oDist').textContent=(p.z/IMPLANT_Z*TOTAL_CM).toFixed(1)+' cm';
+  $('oPass').textContent=g.pass.toLocaleString('ja-JP');
+  $('oTime').textContent=fmt(g.t);
+  screens('scOver'); sfxLose();
+}
+function clearGame(){
+  state='clear';
+  const acc=g.acc;
+  const rank = acc<.3&&p.hp>60 ? 'S' : acc<.5 ? 'A' : acc<.8 ? 'B' : 'C';
+  $('rank').textContent=rank;
+  $('clearMsg').innerHTML = rank==='S'
+    ? '内膜のまんなかに、きれいに潜り込んだ。<br>ここから、ぜんぶが始まる。'
+    : 'ともあれ、根は張った。<br>ここから、ぜんぶが始まる。';
+  $('cTime').textContent=fmt(g.t);
+  $('cPass').textContent=g.pass.toLocaleString('ja-JP');
+  $('cHit').textContent=g.hits+' 回';
+  $('cHp').textContent=Math.round(p.hp);
+  if(!best||g.t<best.t){ best={t:g.t,rank:rank}; try{localStorage.setItem('seishi_best',JSON.stringify(best));}catch(e){} }
+  $('cBest').textContent=best?fmt(best.t)+'（'+best.rank+'）':'—';
+  screens('scClear'); sfxWin();
+}
+function togglePause(){
+  if(state==='swim'||state==='egg'||state==='embryo'){ prevState=state; state='pause'; screens('scPause'); }
+  else if(state==='pause'){ state=prevState; screens(null); lastT=performance.now()/1000; }
+}
+function fmt(s){const m=Math.floor(s/60);return m+':'+String(Math.floor(s%60)).padStart(2,'0');}
+$('bStart').onclick=start; $('bRetry').onclick=start; $('bAgain').onclick=start;
+$('bTitle1').onclick=$('bTitle2').onclick=()=>{state='title';screens('scTitle');};
+$('bResume').onclick=togglePause;
+$('bGiveUp').onclick=()=>{state='title';screens('scTitle');};
+
+function buildTicks(){
+  const el=$('ticks'); el.innerHTML='';
+  ALL.forEach((s,i)=>{
+    const z0=i?ALL[i-1].end:0, mid=(z0+s.end)/2;
+    const d=document.createElement('i');
+    d.textContent=(s.name==='卵管（帰路）'?'帰路':s.name); d.style.left=(mid/IMPLANT_Z*100)+'%';
+    el.appendChild(d);
+  });
+}
+
+/* ===================== 出現 ===================== */
+function spawnOne(t,z,tb,extra){
+  const a=Math.random()*TAU;
+  let r=0.5;
+  if(t==='cell') r=rnd(1.0,1.7);
+  else if(t==='clot') r=rnd(.75,1.5);
+  else if(t==='acid') r=rnd(.34,.5);
+  else if(t==='rival') r=.4;
+  else if(t==='food') r=.42;
+  const rr = t==='flow' ? 0 : Math.sqrt(Math.random())*Math.max(0,tb.r-r-0.25);
+  const e={t:t,x:tb.x+Math.cos(a)*rr,y:tb.y+Math.sin(a)*rr,z:z,r:r,
+    vx:0,vy:0,seed:Math.random()*100,ph:Math.random()*TAU,done:false,passed:false};
+  if(t==='flow'){ e.x=tb.x;e.y=tb.y;e.r=tb.r*0.52; }
+  if(extra) Object.assign(e,extra);
+  ents.push(e);
+}
+function spawnStep(){
+  while(spawnZ < p.z+DRAW+6){
+    const z=spawnZ; spawnZ+=2.6;
+    if(z<56) continue;
+    if(Math.abs(z-EGG_Z)<22) continue;
+    if(z>IMPLANT_Z-26) continue;
+    if(ents.length>95) continue;
+    const s=paramsAt(z), d=s.dens, tb=tube(z);
+    const ramp=0.68+0.45*clamp(z/2400,0,1);
+    if(Math.random()<d.acid*0.20*ramp) spawnOne('acid',z,tb);
+    if(Math.random()<d.clot*0.19*ramp) spawnOne('clot',z,tb);
+    if(Math.random()<d.cell*0.15*ramp) spawnOne('cell',z,tb);
+    if(Math.random()<d.rival*0.21)     spawnOne('rival',z,tb);
+    if(Math.random()<d.food*0.16)      spawnOne('food',z,tb);
+    if(Math.random()<d.flow*0.10)      spawnOne('flow',z,tb);
+  }
+}
+
+/* ===================== 更新 ===================== */
+function update(dt){
+  time+=dt; g.t+=dt;
+
+  /* --- 心音 --- */
+  A.hb-=dt;
+  if(A.hb<=0){ A.hb=p.hp<35?0.62:0.98; if(state!=='title') sfxHeart(); }
+
+  /* --- 入力 → 加速 --- */
+  let ix=0,iy=0;
+  if(keys.ArrowLeft||keys.KeyA) ix-=1;
+  if(keys.ArrowRight||keys.KeyD) ix+=1;
+  if(keys.ArrowUp||keys.KeyW) iy-=1;
+  if(keys.ArrowDown||keys.KeyS) iy+=1;
+  if(touchSteer){
+    const dx=(touchSteer.x-W*0.5)/(W*0.30), dy=(touchSteer.y-H*0.56)/(H*0.30);
+    ix=clamp(dx,-1,1); iy=clamp(dy,-1,1);
+  }
+  const il=Math.hypot(ix,iy); if(il>1){ix/=il;iy/=il;}
+
+  /* スタミナ切れ → 28まで戻るまでダッシュ禁止（ばたつき防止） */
+  if(p.st<=0.6) g.tired=true;
+  if(g.tired && p.st>28) g.tired=false;
+  const dashing = (keys.Space||keys.ShiftLeft||keys.ShiftRight||dashHold) && !g.tired && state!=='egg';
+  if(state==='swim'||state==='embryo'){
+    p.vx+=ix*ACC*dt; p.vy+=iy*ACC*dt;
+    const dmp=Math.pow(DAMP,dt*60);
+    p.vx*=dmp; p.vy*=dmp;
+    const vl=Math.hypot(p.vx,p.vy);
+    if(vl>VMAX){ p.vx=p.vx/vl*VMAX; p.vy=p.vy/vl*VMAX; }
+    p.x+=p.vx*dt; p.y+=p.vy*dt;
+
+    /* 目標速度 */
+    let tgt;
+    if(state==='embryo') tgt = dashing?23:15;
+    else tgt = dashing ? SPD_DASH : (g.tired ? SPD_TIRED : SPD_CRUISE);
+    if(p.boost>0){ tgt*=1.45; p.boost-=dt; }
+    if(p.hp<30) tgt*=0.86;
+    p.spd=lerp(p.spd,tgt,1-Math.pow(0.0015,dt));
+    p.z+=p.spd*dt;
+
+    if(dashing){ p.st=Math.max(0,p.st-ST_DRAIN*dt); if(Math.random()<dt*7) sfxSwim(); }
+    else p.st=Math.min(100,p.st+ST_REGEN*dt);
+
+    /* 尾のふり */
+    p.phase += dt*(6.5+p.spd*0.42);
+
+    /* 繊毛の流れ（卵管以降は横に押される） */
+    const sp=paramsAt(p.z);
+    const fl=(sp.dens.flow||0)*1.9;
+    p.vx+=Math.sin(p.z*0.05+time*1.4)*fl*dt*9;
+    p.vy+=Math.cos(p.z*0.043+time*1.1)*fl*dt*9;
+
+    /* 壁 */
+    const tb=tube(p.z);
+    const dx=p.x-tb.x, dy=p.y-tb.y, dl=Math.hypot(dx,dy)||1e-6, lim=tb.r-PR;
+    if(dl>lim){
+      const nx=dx/dl, ny=dy/dl;
+      p.x=tb.x+nx*lim; p.y=tb.y+ny*lim;
+      const vn=p.vx*nx+p.vy*ny;
+      p.vx-=nx*vn*1.7; p.vy-=ny*vn*1.7;
+      p.spd*=Math.pow(0.45,dt);            /* 壁ズリ摩擦（フレーム非依存） */
+      if(time-g.lastWall>0.95 && vn>2.0){
+        p.spd*=0.82;
+        g.lastWall=time; damage(DMG.wall,'hp');
+        toast('壁に激突','',0.7);
+        const pr=project(p.x,p.y,p.z); if(pr) burst(pr.x,pr.y,10,[255,140,160]);
+      }
+    }
+
+    /* 受精イベント突入 */
+    if(state==='swim' && p.z>EGG_Z-11){
+      state='egg'; g.eggT=13; g.drill=0; g.rival=0;
+      $('qte').classList.add('on');
+      toast('卵子','たどり着いた。こじ開けろ',1.8);
+    }
+    /* 着床判定 */
+    if(state==='embryo' && p.z>IMPLANT_Z-1.2){
+      const t2=tube(IMPLANT_Z);
+      const px=t2.x+Math.cos(PATCH_A)*t2.r*PATCH_RR, py=t2.y+Math.sin(PATCH_A)*t2.r*PATCH_RR;
+      const d2=Math.hypot(p.x-px,p.y-py)/(t2.r*PATCH_HIT);
+      g.acc=d2;
+      if(d2<=1){ clearGame(); }
+      else {
+        g.miss++;
+        if(g.miss>=3){ over('miss'); }
+        else {
+          p.z=IMPLANT_Z-105; p.spd=7; p.vx*=-.4; p.vy*=-.4;
+          toast('内膜に弾かれた','光っている場所へ寄せろ（あと'+(3-g.miss)+'回）',2.4);
+          damage(9,'hp');
+        }
+      }
+    }
+  }
+
+  /* --- 受精QTE --- */
+  if(state==='egg'){
+    g.eggT-=dt;
+    g.rival=Math.min(100,g.rival+dt*7.1);
+    p.spd=lerp(p.spd,1.5,1-Math.pow(0.1,dt));
+    p.z+=p.spd*dt*0.35;
+    p.phase+=dt*(9+g.drill*0.2);
+    p.x=lerp(p.x,tube(p.z).x,1-Math.pow(0.2,dt));
+    p.y=lerp(p.y,tube(p.z).y,1-Math.pow(0.2,dt));
+    $('drillF').style.width=g.drill+'%';
+    $('rivF').style.width=g.rival+'%';
+    if(g.drill>=100){
+      state='embryo'; $('qte').classList.remove('on');
+      p.z=EGG_Z+5; p.spd=12; p.st=100; p.hp=Math.min(100,p.hp+30);
+      spawnZ=Math.max(spawnZ,p.z+10);
+      ents=ents.filter(e=>e.z>p.z+14);
+      toast('受精','ここから、きみは「胚」になる',2.6);
+      flashWhite=1; sfxWin();
+      for(let i=0;i<5;i++) setTimeout(()=>burst(W*0.5,H*0.45,26,[255,245,210],1.6),i*70);
+    } else if(g.rival>=100 || g.eggT<=0){
+      over('rival');
+    }
+  }
+
+  /* --- 細胞分裂（胚） --- */
+  if(state==='embryo'){
+    const prog=(p.z-EGG_Z)/(IMPLANT_Z-EGG_Z);
+    const nc=prog<.18?2:prog<.34?4:prog<.5?8:prog<.68?16:32;
+    if(nc!==g.cells){
+      g.cells=nc; sfxPick();
+      toast(nc>=32?'胚盤胞':(nc+'細胞期'),'',1.1);
+    }
+    if(!g.saidEnd && p.z>ALL[4].end){
+      g.saidEnd=true; toast('子宮内膜','光っている場所へ飛び込め',2.6);
+    }
+  }
+
+  /* --- カメラ（管の芯寄りに置き、壁を突き抜けないようにする） --- */
+  const ct=tube(p.z-CAM_BACK*0.55);
+  camX=lerp(camX,lerp(ct.x,p.x,0.55),1-Math.pow(0.004,dt));
+  camY=lerp(camY,lerp(ct.y,p.y,0.55)-0.62,1-Math.pow(0.004,dt));
+  camZ=p.z-CAM_BACK;
+  if(shake>0) shake=Math.max(0,shake-dt*26);
+
+  /* --- 出現と更新 --- */
+  if(state==='swim'||state==='embryo') spawnStep();
+
+  for(let i=ents.length-1;i>=0;i--){
+    const e=ents[i];
+    if(e.z<camZ-8){ ents.splice(i,1); continue; }
+    e.ph+=dt*2;
+    if(e.t==='cell'){
+      const dz=Math.abs(e.z-p.z);
+      if(dz<17){
+        const dx=p.x-e.x, dy=p.y-e.y, dl=Math.hypot(dx,dy)||1;
+        e.vx=lerp(e.vx,dx/dl*1.6,dt*2); e.vy=lerp(e.vy,dy/dl*1.6,dt*2);
+      } else { const k=Math.pow(0.3,dt); e.vx*=k; e.vy*=k; }
+      e.x+=e.vx*dt; e.y+=e.vy*dt;
+      e.z-=1.2*dt;
+    } else if(e.t==='rival'){
+      e.z+=rnd(7.5,10.5)*dt;
+      e.x+=Math.sin(e.ph*1.7+e.seed)*1.3*dt;
+      e.y+=Math.cos(e.ph*1.4+e.seed)*1.1*dt;
+      if(!e.passed && e.z<p.z-0.6){ e.passed=true; g.pass++; }
+    } else if(e.t==='acid'){
+      e.z-=4.5*dt;
+      e.x+=Math.sin(e.ph*2.3+e.seed)*0.9*dt;
+      e.y+=Math.cos(e.ph*2.1+e.seed)*0.9*dt;
+    } else if(e.t==='clot'){
+      e.z-=0.5*dt;
+    }
+    /* 衝突 */
+    if(!e.done && Math.abs(e.z-p.z) < (e.r*0.6+PR+0.55)){
+      const dd=Math.hypot(p.x-e.x,p.y-e.y);
+      const near = e.t==='flow' ? dd < e.r*1.06 : dd < e.r+PR;
+      if(near){
+        const pr=project(p.x,p.y,p.z);
+        if(e.t==='food'){
+          e.done=true; g.food++; p.st=Math.min(100,p.st+34); p.hp=Math.min(100,p.hp+6);
+          sfxPick(); if(pr) burst(pr.x,pr.y,16,[150,255,230]);
+          toast('果糖','スタミナ回復',0.8);
+          ents.splice(i,1); continue;
+        }
+        if(e.t==='flow'){
+          e.done=true; p.boost=1.7; p.st=Math.min(100,p.st+12);
+          sfxFlow(); if(pr) burst(pr.x,pr.y,22,[190,240,255],1.4);
+          toast('追い潮','加速！',0.9);
+          continue;
+        }
+        e.done=true;
+        if(e.t==='cell'){ damage(DMG.cell,'hp'); toast('白血球に捕まった','',0.9);
+          p.spd*=0.45; p.vx*=-0.6; p.vy*=-0.6; }
+        else if(e.t==='clot'){ damage(DMG.clot,'hp'); toast('粘液に絡まる','',0.8); p.spd*=0.55; }
+        else if(e.t==='acid'){ damage(DMG.acid,'hp'); toast('酸にやられた','',0.8); }
+        else if(e.t==='rival'){ damage(DMG.rival,'hp');
+          const dx=p.x-e.x,dy=p.y-e.y,dl=Math.hypot(dx,dy)||1;
+          p.vx+=dx/dl*3.2; p.vy+=dy/dl*3.2; }
+        if(pr) burst(pr.x,pr.y,14,[255,120,140]);
+      }
+    }
+  }
+
+  /* --- 塵 --- */
+  for(let i=0;i<dust.length;i++){
+    const d=dust[i];
+    d.z-=2.2*dt;
+    if(d.z<camZ+0.8){
+      const z=p.z+DRAW-rnd(0,4), t=tube(z), a=Math.random()*TAU, rr=Math.sqrt(Math.random())*t.r*0.96;
+      d.z=z; d.x=t.x+Math.cos(a)*rr; d.y=t.y+Math.sin(a)*rr; d.r=rnd(.02,.075); d.b=rnd(.25,.9);
+    }
+  }
+
+  /* --- 画面パーティクル --- */
+  for(let i=parts.length-1;i>=0;i--){
+    const q=parts[i];
+    q.life-=dt; if(q.life<=0){ parts.splice(i,1); continue; }
+    const k=Math.pow(0.03,dt);
+    q.x+=q.vx*dt; q.y+=q.vy*dt; q.vx*=k; q.vy=q.vy*k+90*dt;
+  }
+
+  /* --- HUD --- */
+  hud();
+  if(toastT>0){ toastT-=dt; if(toastT<=0){ $('toast').style.opacity=0; $('sub2').style.opacity=0; } }
+  if(vigT>0){ vigT=Math.max(0,vigT-dt*2.2); }
+  const lowhp = p.hp<30 ? (0.18+0.12*Math.sin(time*5)) : 0;
+  $('vig').style.opacity=Math.max(vigT,lowhp);
+  if(flashWhite>0) flashWhite=Math.max(0,flashWhite-dt*1.6);
+}
+let flashWhite=0;
+
+function hud(){
+  $('hpF').style.width=clamp(p.hp,0,100)+'%';
+  $('stF').style.width=clamp(p.st,0,100)+'%';
+  const pg=clamp(p.z/IMPLANT_Z,0,1);
+  $('progF').style.width=(pg*100)+'%';
+  const sp=paramsAt(p.z);
+  if($('stName').textContent!==sp.name){ $('stName').textContent=sp.name; $('stSub').textContent=sp.sub; }
+  $('iDist').textContent=(pg*TOTAL_CM).toFixed(1);
+  $('iPass').textContent=g.pass.toLocaleString('ja-JP');
+  const left=Math.max(1,Math.round(3e8*Math.pow(1-pg,3.2)));
+  $('iRival').textContent = left>=1e8 ? (left/1e8).toFixed(1)+'億'
+    : left>=1e4 ? Math.round(left/1e4).toLocaleString('ja-JP')+'万'
+    : left.toLocaleString('ja-JP');
+}
+
+/* ===================== 描画 ===================== */
+const LIGHT=[0.30,0.86];
+function ringOf(i,z){
+  const t=tube(z), dz=z-camZ;
+  if(dz<0.32) return null;
+  const sc=FOV/dz;
+  const px=W*0.5+(t.x-camX)*sc, py=H*0.5+(t.y-camY)*sc;
+  const xs=new Array(SEG+1), ys=new Array(SEG+1);
+  for(let j=0;j<=SEG;j++){
+    const jj=j%SEG, a=jj/SEG*TAU;
+    const bump=1+(hash(i,jj)-0.5)*0.22+0.045*Math.sin(z*0.4+jj*1.7+time*1.5);
+    const rr=t.r*bump*sc;
+    xs[j]=px+Math.cos(a)*rr; ys[j]=py+Math.sin(a)*rr;
+  }
+  return {xs:xs,ys:ys,z:z,dz:dz,t:t,sc:sc,px:px,py:py};
+}
+function drawTube(){
+  const i0=Math.max(0,Math.floor((camZ+0.9)/RSTEP));
+  const i1=Math.ceil(Math.min(IMPLANT_Z,camZ+DRAW)/RSTEP);
+  let far=null;
+  for(let i=i1;i>=i0;i--){
+    const near=ringOf(i,i*RSTEP);
+    if(far&&near){
+      const fogT=clamp(near.dz/DRAW,0,1), s=near.t.s;
+      const rip=1+0.07*Math.sin(near.z*0.5+time*3.2);
+      for(let j=0;j<SEG;j++){
+        const a=(j+0.5)/SEG*TAU;
+        let sh=clamp(Math.sin(a)*LIGHT[1]+Math.cos(a)*LIGHT[0],0,1);
+        sh=(0.30+0.70*sh)*rip;
+        let col=mix(s.cw,s.cl,clamp(sh,0,1)*0.95);
+        col=mix(col,s.cf,fogT*0.94);
+        ctx.fillStyle=rgb(col);
+        ctx.beginPath();
+        ctx.moveTo(far.xs[j],far.ys[j]);
+        ctx.lineTo(far.xs[j+1],far.ys[j+1]);
+        ctx.lineTo(near.xs[j+1],near.ys[j+1]);
+        ctx.lineTo(near.xs[j],near.ys[j]);
+        ctx.closePath(); ctx.fill();
+      }
+    }
+    far=near;
+  }
+  /* 奥の光 */
+  const fz=Math.min(IMPLANT_Z-1,camZ+DRAW*0.92), ft=tube(fz), fp=project(ft.x,ft.y,fz);
+  if(fp){
+    const R=ft.r*fp.s*1.1;
+    const gd=ctx.createRadialGradient(fp.x,fp.y,0,fp.x,fp.y,Math.max(8,R));
+    gd.addColorStop(0,rgba(ft.s.cl,.42));
+    gd.addColorStop(.5,rgba(ft.s.cl,.12));
+    gd.addColorStop(1,rgba(ft.s.cf,0));
+    ctx.fillStyle=gd; ctx.beginPath(); ctx.arc(fp.x,fp.y,Math.max(8,R),0,TAU); ctx.fill();
+  }
+}
+
+function drawSperm(x,y,z,ph,amp,sc,head,tail,glow){
+  /* 頭が一番奥（カメラから遠い）→ 先に頭、あとから手前にのびる尾を重ねる */
+  const N=18, pts=[];
+  for(let i=0;i<=N;i++){
+    const t=i/N;
+    const zz=z-t*3.5*sc;
+    const w=Math.sin(ph-t*6.2)*amp*Math.pow(t,0.7);
+    const pp=project(x+w,y+w*0.22,zz);
+    if(pp) pts.push({x:pp.x,y:pp.y,s:pp.s,t:t});
+  }
+  if(pts.length<2) return;
+  const h=pts[0], hr=Math.max(2.2,PR*sc*h.s);
+  if(glow){
+    const g2=ctx.createRadialGradient(h.x,h.y,hr*.4,h.x,h.y,hr*3.0);
+    g2.addColorStop(0,rgba(glow,.34)); g2.addColorStop(1,rgba(glow,0));
+    ctx.fillStyle=g2; ctx.beginPath(); ctx.arc(h.x,h.y,hr*3.0,0,TAU); ctx.fill();
+  }
+  const gd=ctx.createRadialGradient(h.x-hr*.35,h.y-hr*.45,hr*.1,h.x,h.y,hr*1.1);
+  gd.addColorStop(0,rgba(mix(head,[255,255,255],.6),1));
+  gd.addColorStop(.6,rgba(head,1));
+  gd.addColorStop(1,rgba(mix(head,[70,20,35],.55),1));
+  ctx.fillStyle=gd;
+  ctx.beginPath(); ctx.ellipse(h.x,h.y,hr*0.96,hr*1.2,0,0,TAU); ctx.fill();
+  ctx.strokeStyle=rgba(mix(head,[255,255,255],.75),.55); ctx.lineWidth=Math.max(.6,hr*.1);
+  ctx.beginPath(); ctx.ellipse(h.x,h.y,hr*0.96,hr*1.2,0,0,TAU); ctx.stroke();
+
+  ctx.lineCap='round';
+  for(let i=0;i<pts.length-1;i++){
+    const a=pts[i],b=pts[i+1], tt=(a.t+b.t)*0.5;
+    const thick=(tt<0.17?0.66:0.50)*Math.pow(1-tt,0.78)*(b.s/h.s);
+    ctx.strokeStyle=rgba(tail,0.42+0.56*(1-tt));
+    ctx.lineWidth=Math.max(1.1,hr*thick);
+    ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+  }
+}
+
+function drawEmbryo(x,y,z,sc){
+  const pp=project(x,y,z); if(!pp) return;
+  const R=PR*1.5*sc*pp.s, n=g.cells;
+  ctx.fillStyle='rgba(255,230,235,.14)';
+  ctx.beginPath(); ctx.arc(pp.x,pp.y,R*1.5,0,TAU); ctx.fill();
+  ctx.strokeStyle='rgba(255,220,230,.5)'; ctx.lineWidth=Math.max(1,R*.1);
+  ctx.beginPath(); ctx.arc(pp.x,pp.y,R*1.5,0,TAU); ctx.stroke();
+  const cr=R/Math.sqrt(Math.min(n,16))*0.95;
+  for(let i=0;i<Math.min(n,24);i++){
+    const a=i/Math.min(n,24)*TAU+time*0.5, rr=n===1?0:R*0.55*(0.5+0.5*hash(i,7));
+    const cx=pp.x+Math.cos(a)*rr, cy=pp.y+Math.sin(a)*rr;
+    const gd=ctx.createRadialGradient(cx-cr*.3,cy-cr*.3,cr*.1,cx,cy,cr);
+    gd.addColorStop(0,'rgba(255,250,245,1)');
+    gd.addColorStop(.7,'rgba(255,205,215,1)');
+    gd.addColorStop(1,'rgba(205,130,150,1)');
+    ctx.fillStyle=gd; ctx.beginPath(); ctx.arc(cx,cy,cr,0,TAU); ctx.fill();
+  }
+}
+
+function drawEnt(e){
+  const pp=project(e.x,e.y,e.z); if(!pp) return;
+  const R=e.r*pp.s, fade=clamp(1-(pp.dz/DRAW)*0.85,0.12,1);
+  if(R<0.6) return;
+  if(e.t==='cell'){
+    ctx.globalAlpha=fade;
+    const gd=ctx.createRadialGradient(pp.x-R*.3,pp.y-R*.3,R*.1,pp.x,pp.y,R);
+    gd.addColorStop(0,'rgba(250,245,255,.95)');
+    gd.addColorStop(.55,'rgba(205,195,235,.82)');
+    gd.addColorStop(1,'rgba(120,105,170,.5)');
+    ctx.fillStyle=gd;
+    ctx.beginPath();
+    for(let i=0;i<=16;i++){
+      const a=i/16*TAU, rr=R*(1+0.14*Math.sin(a*3+e.ph)+0.09*Math.sin(a*5-e.ph*1.4));
+      const X=pp.x+Math.cos(a)*rr, Y=pp.y+Math.sin(a)*rr;
+      i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);
+    }
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle='rgba(95,70,135,.65)';
+    ctx.beginPath(); ctx.arc(pp.x+R*.1,pp.y+R*.05,R*.42,0,TAU); ctx.fill();
+    ctx.globalAlpha=1;
+  } else if(e.t==='clot'){
+    ctx.globalAlpha=fade*0.95;
+    const gd=ctx.createRadialGradient(pp.x-R*.3,pp.y-R*.4,R*.1,pp.x,pp.y,R);
+    gd.addColorStop(0,'rgba(240,215,150,.92)');
+    gd.addColorStop(1,'rgba(130,95,35,.78)');
+    ctx.fillStyle=gd;
+    ctx.beginPath();
+    for(let i=0;i<=14;i++){
+      const a=i/14*TAU, rr=R*(1+0.22*(hash(Math.floor(e.seed*99),i)-0.5));
+      const X=pp.x+Math.cos(a)*rr, Y=pp.y+Math.sin(a)*rr;
+      i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);
+    }
+    ctx.closePath(); ctx.fill();
+    ctx.globalAlpha=1;
+  } else if(e.t==='acid'){
+    ctx.globalAlpha=fade;
+    const gd=ctx.createRadialGradient(pp.x,pp.y,0,pp.x,pp.y,R*1.8);
+    gd.addColorStop(0,'rgba(215,255,140,.95)');
+    gd.addColorStop(.4,'rgba(150,230,80,.5)');
+    gd.addColorStop(1,'rgba(90,190,40,0)');
+    ctx.fillStyle=gd; ctx.beginPath(); ctx.arc(pp.x,pp.y,R*1.8,0,TAU); ctx.fill();
+    ctx.strokeStyle='rgba(235,255,180,.9)'; ctx.lineWidth=Math.max(1,R*.16);
+    ctx.beginPath(); ctx.arc(pp.x,pp.y,R,0,TAU); ctx.stroke();
+    ctx.globalAlpha=1;
+  } else if(e.t==='rival'){
+    ctx.globalAlpha=fade*0.92;
+    drawSperm(e.x,e.y,e.z,e.ph*5+e.seed,0.22,0.78,[196,198,206],[150,152,162],null);
+    ctx.globalAlpha=1;
+  } else if(e.t==='food'){
+    ctx.globalAlpha=fade;
+    const gd=ctx.createRadialGradient(pp.x,pp.y,0,pp.x,pp.y,R*2.6);
+    gd.addColorStop(0,'rgba(220,255,250,.98)');
+    gd.addColorStop(.35,'rgba(110,245,215,.55)');
+    gd.addColorStop(1,'rgba(60,220,190,0)');
+    ctx.fillStyle=gd; ctx.beginPath(); ctx.arc(pp.x,pp.y,R*2.6,0,TAU); ctx.fill();
+    ctx.save(); ctx.translate(pp.x,pp.y); ctx.rotate(e.ph);
+    ctx.fillStyle='rgba(255,255,255,.95)';
+    ctx.beginPath();
+    for(let i=0;i<6;i++){const a=i/6*TAU;const X=Math.cos(a)*R*.85,Y=Math.sin(a)*R*.85;i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);}
+    ctx.closePath(); ctx.fill(); ctx.restore();
+    ctx.globalAlpha=1;
+  } else if(e.t==='flow'){
+    ctx.globalAlpha=fade*0.8;
+    for(let k=0;k<3;k++){
+      ctx.strokeStyle='rgba(190,240,255,'+(0.5-k*0.14)+')';
+      ctx.lineWidth=Math.max(1,R*0.07);
+      ctx.beginPath(); ctx.arc(pp.x,pp.y,R*(1+k*0.11),0,TAU); ctx.stroke();
+    }
+    for(let i=0;i<10;i++){
+      const a=i/10*TAU+e.ph*0.6;
+      ctx.strokeStyle='rgba(235,255,255,.55)'; ctx.lineWidth=Math.max(1,R*.05);
+      ctx.beginPath();
+      ctx.moveTo(pp.x+Math.cos(a)*R*0.86,pp.y+Math.sin(a)*R*0.86);
+      ctx.lineTo(pp.x+Math.cos(a)*R*1.04,pp.y+Math.sin(a)*R*1.04);
+      ctx.stroke();
+    }
+    ctx.globalAlpha=1;
+  }
+}
+
+function drawEgg(){
+  if(state!=='egg'&&!(state==='swim'&&p.z>EGG_Z-DRAW)) return;
+  const z=EGG_Z+3.4;
+  if(z-camZ>DRAW+10||z-camZ<0.4) return;
+  const t=tube(z), pp=project(t.x,t.y,z); if(!pp) return;
+  const R=Math.min(t.r*0.86,3.6)*pp.s;
+  /* 放射冠 */
+  for(let i=0;i<46;i++){
+    const a=i/46*TAU+time*0.08, rr=R*(1.18+0.1*Math.sin(i*2.3+time));
+    const X=pp.x+Math.cos(a)*rr, Y=pp.y+Math.sin(a)*rr;
+    ctx.fillStyle='rgba(255,220,190,'+(0.30+0.25*Math.sin(i+time*2))+')';
+    ctx.beginPath(); ctx.arc(X,Y,R*0.085,0,TAU); ctx.fill();
+  }
+  /* 透明帯 */
+  const crack=g.drill/100;
+  ctx.strokeStyle='rgba(255,235,215,'+(0.75-crack*0.5)+')';
+  ctx.lineWidth=Math.max(2,R*0.09);
+  ctx.beginPath(); ctx.arc(pp.x,pp.y,R*1.05,0,TAU); ctx.stroke();
+  /* 本体 */
+  const gd=ctx.createRadialGradient(pp.x-R*.3,pp.y-R*.35,R*.08,pp.x,pp.y,R);
+  gd.addColorStop(0,'rgba(255,250,240,1)');
+  gd.addColorStop(.45,'rgba(255,216,200,.98)');
+  gd.addColorStop(.85,'rgba(235,150,145,.95)');
+  gd.addColorStop(1,'rgba(180,95,105,.9)');
+  ctx.fillStyle=gd; ctx.beginPath(); ctx.arc(pp.x,pp.y,R,0,TAU); ctx.fill();
+  /* 核 */
+  ctx.fillStyle='rgba(255,170,180,.45)';
+  ctx.beginPath(); ctx.arc(pp.x+R*.12,pp.y-R*.06,R*.3,0,TAU); ctx.fill();
+  /* 掘削の穴 */
+  if(crack>0){
+    ctx.fillStyle='rgba(60,10,25,'+(0.3+crack*0.5)+')';
+    ctx.beginPath(); ctx.arc(pp.x,pp.y+R*0.1,R*0.1+R*0.3*crack,0,TAU); ctx.fill();
+    ctx.strokeStyle='rgba(255,240,210,.8)'; ctx.lineWidth=Math.max(1,R*.03);
+    for(let i=0;i<7;i++){
+      const a=i/7*TAU+0.3;
+      ctx.beginPath(); ctx.moveTo(pp.x,pp.y+R*0.1);
+      ctx.lineTo(pp.x+Math.cos(a)*R*(0.2+crack*0.75),pp.y+R*0.1+Math.sin(a)*R*(0.2+crack*0.75));
+      ctx.stroke();
+    }
+  }
+  /* 光 */
+  const gl=ctx.createRadialGradient(pp.x,pp.y,R*0.8,pp.x,pp.y,R*2.4);
+  gl.addColorStop(0,'rgba(255,230,200,.35)');
+  gl.addColorStop(1,'rgba(255,200,170,0)');
+  ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(pp.x,pp.y,R*2.4,0,TAU); ctx.fill();
+}
+
+function drawEndWall(){
+  const z=IMPLANT_Z;
+  if(z-camZ>DRAW+4||z-camZ<0.4) return;
+  const t=tube(z), pp=project(t.x,t.y,z); if(!pp) return;
+  const R=t.r*pp.s*1.3;
+  const gd=ctx.createRadialGradient(pp.x,pp.y,R*0.05,pp.x,pp.y,R);
+  gd.addColorStop(0,'rgb(58,10,24)');
+  gd.addColorStop(.7,rgb(mix(t.s.cw,[0,0,0],.25)));
+  gd.addColorStop(1,rgb(t.s.cw));
+  ctx.fillStyle=gd; ctx.beginPath(); ctx.arc(pp.x,pp.y,R,0,TAU); ctx.fill();
+  /* ひだ */
+  ctx.strokeStyle='rgba(0,0,0,.25)';
+  for(let i=0;i<14;i++){
+    const a=i/14*TAU;
+    ctx.lineWidth=Math.max(1,R*0.02);
+    ctx.beginPath(); ctx.moveTo(pp.x,pp.y);
+    ctx.lineTo(pp.x+Math.cos(a)*R,pp.y+Math.sin(a)*R); ctx.stroke();
+  }
+  /* 着床ポイント */
+  const px=t.x+Math.cos(PATCH_A)*t.r*PATCH_RR, py=t.y+Math.sin(PATCH_A)*t.r*PATCH_RR;
+  const qq=project(px,py,z); if(!qq) return;
+  const prad=t.r*PATCH_HIT*qq.s*(1+0.04*Math.sin(time*4));
+  const pg=ctx.createRadialGradient(qq.x,qq.y,0,qq.x,qq.y,prad);
+  pg.addColorStop(0,'rgba(255,248,225,.95)');
+  pg.addColorStop(.35,'rgba(255,190,200,.65)');
+  pg.addColorStop(.75,'rgba(255,120,150,.3)');
+  pg.addColorStop(1,'rgba(255,90,130,0)');
+  ctx.fillStyle=pg; ctx.beginPath(); ctx.arc(qq.x,qq.y,prad,0,TAU); ctx.fill();
+  ctx.strokeStyle='rgba(255,235,210,'+(0.4+0.3*Math.sin(time*5))+')';
+  ctx.lineWidth=2; ctx.setLineDash([6,7]); ctx.lineDashOffset=-time*22;
+  ctx.beginPath(); ctx.arc(qq.x,qq.y,prad*0.8,0,TAU); ctx.stroke();
+  ctx.setLineDash([]);
+  /* 誘導 */
+  if(state==='embryo' && IMPLANT_Z-p.z<150){
+    const me=project(p.x,p.y,p.z+1.2);
+    if(me){
+      ctx.strokeStyle='rgba(255,240,220,.35)'; ctx.lineWidth=2;
+      ctx.setLineDash([3,9]); ctx.lineDashOffset=-time*30;
+      ctx.beginPath(); ctx.moveTo(me.x,me.y); ctx.lineTo(qq.x,qq.y); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+}
+
+function drawDust(){
+  for(let i=0;i<dust.length;i++){
+    const d=dust[i], pp=project(d.x,d.y,d.z);
+    if(!pp) continue;
+    const R=d.r*pp.s; if(R<0.35) continue;
+    const a=d.b*clamp(1-pp.dz/DRAW,0,1)*0.85;
+    ctx.fillStyle='rgba(255,230,225,'+a.toFixed(3)+')';
+    ctx.beginPath(); ctx.arc(pp.x,pp.y,R,0,TAU); ctx.fill();
+  }
+}
+
+function drawParts(){
+  for(let i=0;i<parts.length;i++){
+    const q=parts[i], a=clamp(q.life/q.max,0,1);
+    ctx.fillStyle='rgba('+q.c[0]+','+q.c[1]+','+q.c[2]+','+(a*0.9).toFixed(3)+')';
+    ctx.beginPath(); ctx.arc(q.x,q.y,q.r*(0.4+a),0,TAU); ctx.fill();
+  }
+}
+
+function render(){
+  ctx.save();
+  if(shake>0.1){
+    ctx.translate(rnd(-shake,shake),rnd(-shake,shake));
+  }
+  const bg=paramsAt(p.z);
+  ctx.fillStyle=rgb(mix(bg.cf,bg.cw,.4)); ctx.fillRect(-30,-30,W+60,H+60);
+  drawTube();
+  drawEndWall();
+  drawDust();
+  drawEgg();
+
+  /* 奥→手前 */
+  const vis=[];
+  for(let i=0;i<ents.length;i++) if(ents[i].z>camZ-2) vis.push(ents[i]);
+  vis.sort((a,b)=>b.z-a.z);
+  let drawn=false;
+  for(let i=0;i<vis.length;i++){
+    if(!drawn && vis[i].z<p.z){ drawPlayer(); drawn=true; }
+    drawEnt(vis[i]);
+  }
+  if(!drawn) drawPlayer();
+
+  drawParts();
+
+  /* 速度線 */
+  if(p.spd>22){
+    const n=14, a=clamp((p.spd-22)/14,0,1)*0.35;
+    ctx.strokeStyle='rgba(255,220,225,'+a.toFixed(3)+')';
+    ctx.lineWidth=1.4;
+    for(let i=0;i<n;i++){
+      const ang=hash(i,3)*TAU, rad=(0.4+hash(i,9)*0.7)*Math.min(W,H)*0.6;
+      const X=W*0.5+Math.cos(ang)*rad, Y=H*0.5+Math.sin(ang)*rad;
+      ctx.beginPath(); ctx.moveTo(X,Y);
+      ctx.lineTo(W*0.5+Math.cos(ang)*(rad*0.72),H*0.5+Math.sin(ang)*(rad*0.72));
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+
+  if(flashWhite>0){
+    ctx.fillStyle='rgba(255,250,245,'+(flashWhite*0.9).toFixed(3)+')';
+    ctx.fillRect(0,0,W,H);
+  }
+  /* ビネット */
+  const vg=ctx.createRadialGradient(W*0.5,H*0.5,Math.min(W,H)*0.28,W*0.5,H*0.5,Math.max(W,H)*0.72);
+  vg.addColorStop(0,'rgba(0,0,0,0)');
+  vg.addColorStop(1,'rgba(0,0,0,.58)');
+  ctx.fillStyle=vg; ctx.fillRect(0,0,W,H);
+}
+
+function drawPlayer(){
+  if(state==='embryo'){ drawEmbryo(p.x,p.y,p.z,1); return; }
+  const dashing=p.spd>24;
+  const amp=0.30+clamp(p.spd/34,0,1)*0.34;
+  drawSperm(p.x,p.y,p.z,p.phase,amp,1,
+    [255,236,228],[255,200,205],
+    dashing?[255,190,210]:(p.boost>0?[160,240,255]:null));
+}
+
+/* ===================== タイトル演出用のループ ===================== */
+function titleDrift(dt){
+  p.z+=9*dt; p.phase+=dt*8;
+  p.x=lerp(p.x,tube(p.z).x+Math.sin(time*0.6)*1.3,1-Math.pow(0.1,dt));
+  p.y=lerp(p.y,tube(p.z).y+Math.cos(time*0.47)*1.0,1-Math.pow(0.1,dt));
+  const ct=tube(p.z-CAM_BACK*0.55);
+  camX=lerp(camX,lerp(ct.x,p.x,0.55),1-Math.pow(0.01,dt));
+  camY=lerp(camY,lerp(ct.y,p.y,0.55)-0.62,1-Math.pow(0.01,dt));
+  camZ=p.z-CAM_BACK;
+  if(p.z>ALL[2].end) { p.z=20; spawnZ=60; ents.length=0; }
+  spawnStep();
+  for(let i=ents.length-1;i>=0;i--){ const e=ents[i]; e.ph+=dt*2;
+    if(e.t==='rival') e.z+=8*dt; if(e.z<camZ-8) ents.splice(i,1); }
+  for(let i=0;i<dust.length;i++){
+    const d=dust[i]; d.z-=2.2*dt;
+    if(d.z<camZ+0.8){ const z=p.z+DRAW-rnd(0,4), t=tube(z), a=Math.random()*TAU,
+      rr=Math.sqrt(Math.random())*t.r*0.96;
+      d.z=z;d.x=t.x+Math.cos(a)*rr;d.y=t.y+Math.sin(a)*rr; }
+  }
+  for(let i=parts.length-1;i>=0;i--){const q=parts[i];q.life-=dt;if(q.life<=0)parts.splice(i,1);}
+}
+
+/* ===================== メインループ ===================== */
+function loop(now){
+  now/=1000;
+  let dt=now-lastT; lastT=now;
+  if(!isFinite(dt)||dt<0) dt=0;
+  dt=Math.min(dt,1/18);
+
+  if(state==='pause'){ render(); requestAnimationFrame(loop); return; }
+  if(state==='title'||state==='over'||state==='clear'){
+    time+=dt;
+    if(state==='title') titleDrift(dt);
+    render();
+    requestAnimationFrame(loop); return;
+  }
+  update(dt);
+  render();
+  requestAnimationFrame(loop);
+}
+
+/* ===================== 起動 ===================== */
+resize();
+reset(); state='title'; screens('scTitle'); buildTicks();
+lastT=performance.now()/1000;
+requestAnimationFrame(loop);
+
+/* 動作確認用（コンソールから __seishi.jump(2380) などで途中へ飛べる） */
+window.__seishi=window.__swim={
+  jump:function(z){ p.z=z; spawnZ=Math.max(spawnZ,z+12); ents.length=0; },
+  heal:function(){ p.hp=100; p.st=100; },
+  info:function(){ return {state:state,z:Math.round(p.z),hp:Math.round(p.hp),st:Math.round(p.st),pass:g.pass}; }
+};
+
+})();
+</script>
+</body>
+</html>
