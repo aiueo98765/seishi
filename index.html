@@ -4,7 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>SEISHI — 着床までの旅</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap" rel="stylesheet">
 <style>
+  /* 迫力用の書体。市販の「大髭」を持っている環境ではそれを使い、
+     無ければ Dela Gothic One に落ちる（描画側で虫食い・墨はねを足す） */
+  :root{--hige:'大髭115','大髭113','白舟大髭','Dela Gothic One','Hiragino Kaku Gothic StdN',sans-serif}
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{width:100%;height:100%;overflow:hidden;background:#07030a;
     font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",system-ui,sans-serif;
@@ -15,16 +21,80 @@
   /* ---- HUD ---- */
   #hud{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .4s}
   #hud.on{opacity:1}
-  .topbar{position:absolute;left:0;right:0;top:0;padding:12px 14px 18px;
-    background:linear-gradient(#000000aa,#0000)}
-  .stageline{display:flex;align-items:baseline;gap:10px;text-shadow:0 2px 8px #000}
+  .topbar{position:absolute;left:0;right:0;top:0;padding:10px 0 20px;
+    background:linear-gradient(#000000c0,#0000)}
+  .stageline{display:flex;align-items:baseline;gap:10px;padding:0 14px;text-shadow:0 2px 8px #000}
   #stName{font-size:17px;font-weight:700;letter-spacing:.08em}
   #stSub{font-size:11px;opacity:.72;letter-spacing:.06em}
-  #prog{margin-top:8px;height:4px;background:#ffffff1f;border-radius:4px;overflow:hidden}
-  #progF{height:100%;width:0;background:linear-gradient(90deg,#ff5f8a,#ffd6a0);
-    box-shadow:0 0 10px #ff5f8a99;transition:width .18s linear}
-  #ticks{position:relative;height:12px;margin-top:3px}
-  #ticks i{position:absolute;top:0;font-size:9px;opacity:.45;transform:translateX(-50%);white-space:nowrap}
+
+  /* 流れる場所バー（現在地は中央固定、地図のほうが動く） */
+  #ribbon{position:relative;height:34px;margin-top:7px;overflow:hidden;
+    -webkit-mask-image:linear-gradient(90deg,#0000,#000 14%,#000 86%,#0000);
+            mask-image:linear-gradient(90deg,#0000,#000 14%,#000 86%,#0000)}
+  #rtrack{position:absolute;left:0;top:0;height:100%;will-change:transform}
+  #rtrack .seg{position:absolute;top:12px;height:13px;border-radius:3px;
+    border:1px solid #ffffff2e;box-sizing:border-box}
+  #rtrack .seg b{position:absolute;left:7px;top:-11px;font-size:9px;font-weight:700;
+    letter-spacing:.13em;white-space:nowrap;opacity:.9;text-shadow:0 1px 3px #000}
+  #rtrack .tk{position:absolute;top:27px;width:1px;height:4px;background:#ffffff33}
+  #rtrack .tk.b{height:7px;background:#ffffff7a}
+  #rtrack .tk i{position:absolute;left:0;top:5px;font-size:8px;opacity:.42;
+    transform:translateX(-50%);white-space:nowrap;font-style:normal}
+  #rdone{position:absolute;left:0;top:12px;height:13px;width:0;border-radius:3px;
+    background:linear-gradient(90deg,#ffffff22,#ffd6a099);box-shadow:0 0 12px #ff5f8a66}
+  .rgoal{position:absolute;top:9px;font-size:10px;font-weight:700;letter-spacing:.1em;
+    color:#ffe6b0;transform:translateX(-6px);white-space:nowrap;text-shadow:0 1px 4px #000}
+  #rhere{position:absolute;left:50%;top:5px;width:2px;height:27px;margin-left:-1px;
+    background:linear-gradient(#fff,#ff5f8a);box-shadow:0 0 12px #ff4d7d}
+  #rhere::after{content:'';position:absolute;left:-5px;top:-6px;
+    border:6px solid transparent;border-top-color:#fff;filter:drop-shadow(0 0 4px #ff4d7d)}
+
+  /* 進捗（マイクラ風トースト） */
+  #mct{position:absolute;right:12px;top:172px;width:min(72vw,296px);z-index:9;
+    display:flex;flex-direction:column;gap:7px;align-items:flex-end;pointer-events:none}
+  .mcT{display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;border-radius:4px;
+    background:linear-gradient(#32212af2,#160a0ff2);border:2px solid #000;
+    box-shadow:inset 0 0 0 2px #7a545e,0 8px 22px #000a;
+    transform:translateX(125%);opacity:0;
+    transition:transform .5s cubic-bezier(.16,1.2,.3,1),opacity .35s}
+  .mcT.in{transform:translateX(0);opacity:1}
+  .mcT .ic{flex:0 0 32px;height:32px;border-radius:5px;background:#0006;
+    display:flex;align-items:center;justify-content:center;font-size:17px}
+  .mcT .tx{min-width:0}
+  .mcT .t1{font-size:10px;font-weight:700;letter-spacing:.12em;color:#ffe14d}
+  .mcT .t2{font-size:12.5px;font-weight:700;margin-top:2px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mcT.rare .t1{color:#ff9cf0}
+  .mcT.rare{box-shadow:inset 0 0 0 2px #8d5a8a,0 8px 22px #000a}
+
+  /* きせかえ／進捗パネル */
+  .panel{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;
+    justify-content:center;padding:20px;background:#06020af5;z-index:6}
+  .panel.on{display:flex}
+  .panel h3{font-size:15px;letter-spacing:.24em;font-weight:800}
+  .panel .psub{font-size:11px;opacity:.55;margin:5px 0 15px;letter-spacing:.1em}
+  #skinGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:9px;
+    width:min(94vw,580px);max-height:56vh;overflow-y:auto;padding:3px}
+  .sCard{position:relative;border:1px solid #ffffff1f;border-radius:12px;padding:7px 5px 8px;
+    background:#ffffff0a;text-align:center;cursor:pointer;pointer-events:auto}
+  .sCard.sel{border-color:#ffb0c4;background:#ff9fbb1f;
+    box-shadow:0 0 0 1px #ffb0c4,0 6px 18px #ff356b40}
+  .sCard.lk{opacity:.4}
+  .sCard canvas{width:74px;height:46px;display:block;margin:0 auto}
+  .sCard .nm{font-size:11px;font-weight:700;margin-top:2px}
+  .sCard .cd{font-size:8.5px;opacity:.6;margin-top:2px;line-height:1.5}
+  #achList{width:min(94vw,580px);max-height:58vh;overflow-y:auto;
+    display:flex;flex-direction:column;gap:6px;padding:3px}
+  .aRow{display:flex;align-items:center;gap:10px;padding:8px 11px;border-radius:9px;
+    background:#ffffff0b;border:1px solid #ffffff16;text-align:left}
+  .aRow.got{background:#ffd1660f;border-color:#ffd16647}
+  .aRow .ic{flex:0 0 26px;text-align:center;font-size:15px;filter:grayscale(1);opacity:.45}
+  .aRow.got .ic{filter:none;opacity:1}
+  .aRow .nm{font-size:12px;font-weight:700}
+  .aRow.got .nm{color:#ffe14d}
+  .aRow .ds{font-size:10px;opacity:.55;margin-top:1px}
+  #achCount{font-size:11px;opacity:.6;margin-top:12px;letter-spacing:.1em}
+  .subBtns{display:flex;gap:10px;margin-top:14px}
 
   .bars{position:absolute;left:14px;bottom:16px;width:min(40vw,210px)}
   .bar{position:relative;height:13px;margin-top:7px;background:#00000066;
@@ -55,9 +125,10 @@
   #qte .g i{position:absolute;inset:0;width:0}
   #drillF{background:linear-gradient(90deg,#ffd166,#fff4c2);box-shadow:0 0 14px #ffd16688}
   #rivF{background:linear-gradient(90deg,#7a8390,#c3ccd6)}
-  #qte .mash{text-align:center;font-size:13px;font-weight:800;letter-spacing:.12em;margin-top:8px;
-    animation:pulse .5s infinite alternate}
-  @keyframes pulse{to{transform:scale(1.08);opacity:.6}}
+  #qte .mash{text-align:center;font-size:clamp(19px,5.4vw,26px);font-weight:900;
+    letter-spacing:.14em;margin-top:12px;color:#ffe14d;
+    text-shadow:0 0 18px #ff9d2e,0 2px 6px #000;animation:pulse .36s infinite alternate}
+  @keyframes pulse{to{transform:scale(1.12);opacity:.62}}
 
   /* ---- screens ---- */
   .screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;
@@ -87,6 +158,11 @@
   .res i{opacity:.6;font-style:normal;font-size:11px;letter-spacing:.1em;text-align:right;
     align-self:center}
   .res b{text-align:left;font-weight:700}
+  /* 大髭は Regular しか無い。900 を指定すると合成ボールドで輪郭が太り、
+     髭や抜きが潰れて読めなくなるので 400 のまま使う */
+  #scClear h2{font-family:var(--hige);font-weight:400;letter-spacing:.16em;
+    font-size:clamp(28px,7.5vw,50px)}
+  /* S/A/B/C は大髭を使わない（本人の指定） */
   #rank{font-size:clamp(54px,16vw,96px);font-weight:900;line-height:1;margin:6px 0 2px;
     background:linear-gradient(#fffbe8,#ffd166 55%,#ff8a3d);-webkit-background-clip:text;
     background-clip:text;color:transparent;filter:drop-shadow(0 4px 16px #ffb03d66)}
@@ -117,8 +193,10 @@
   <div id="hud">
     <div class="topbar">
       <div class="stageline"><span id="stName">膣内</span><span id="stSub"></span></div>
-      <div id="prog"><i id="progF"></i></div>
-      <div id="ticks"></div>
+      <div id="ribbon">
+        <div id="rtrack"><i id="rdone"></i></div>
+        <div id="rhere"></div>
+      </div>
     </div>
     <div class="bars">
       <div class="bar"><i id="hpF"></i><b>たいりょく</b></div>
@@ -163,6 +241,10 @@
       <b>P / ESC</b><span>一時停止　　<b style="padding:1px 6px">M</b> 音</span>
     </div>
     <button class="btn" id="bStart">泳ぎ出す</button>
+    <div class="subBtns">
+      <button class="btn ghost" id="bSkins" style="margin-top:0">きせかえ</button>
+      <button class="btn ghost" id="bAchs" style="margin-top:0">進捗</button>
+    </div>
     <p class="note">壁への激突・白血球・酸はダメージ。果糖でスタミナ回復。<br>カメラは常に真後ろ（視点移動なし）。</p>
   </div>
 
@@ -193,6 +275,23 @@
     </div>
     <button class="btn" id="bAgain">もう一度泳ぐ</button>
     <button class="btn ghost" id="bTitle2">タイトルへ</button>
+  </div>
+
+  <div id="mct"></div>
+
+  <div class="panel" id="pSkin">
+    <h3>きせかえ</h3>
+    <div class="psub">条件を満たすと増える</div>
+    <div id="skinGrid"></div>
+    <button class="btn ghost" id="bSkinClose">とじる</button>
+  </div>
+
+  <div class="panel" id="pAch">
+    <h3>進捗</h3>
+    <div class="psub">達成するとスキンが増える</div>
+    <div id="achList"></div>
+    <div id="achCount"></div>
+    <button class="btn ghost" id="bAchClose">とじる</button>
   </div>
 
   <div class="screen" id="scPause">
@@ -296,9 +395,82 @@ let camX=0,camY=0,camZ=0,shake=0;
 const g={t:0,pass:0,food:0,hits:0,drill:0,rival:0,eggT:0,cells:1,
          cause:'',acc:0,lastWall:-9,lastHit:-9,mashLock:false};
 let ents=[], dust=[], parts=[], spawnZ=0;
-let best=null;
-try{ best=JSON.parse(localStorage.getItem('seishi_best')||localStorage.getItem('swim_best')||'null'); }
-catch(e){ best=null; }
+/* ===================== セーブ（進捗・スキン・ベスト） ===================== */
+const SV={ach:{},skin:'normal',best:null};
+try{
+  const o=JSON.parse(localStorage.getItem('seishi_save')||'null');
+  if(o){ SV.ach=o.ach||{}; SV.skin=o.skin||'normal'; SV.best=o.best||null; }
+  if(!SV.best) SV.best=JSON.parse(localStorage.getItem('seishi_best')||localStorage.getItem('swim_best')||'null');
+}catch(e){}
+let best=SV.best;
+function save(){ SV.best=best; try{ localStorage.setItem('seishi_save',JSON.stringify(SV)); }catch(e){} }
+
+/* ===================== スキン（きせかえ） ===================== */
+const SKINS=[
+ {id:'normal',nm:'ふつう',cd:'はじめから',        need:null,     head:[255,236,228],tail:[255,200,205],glow:[255,190,210],acc:'none'},
+ {id:'kin',   nm:'黄金',  cd:'着床する',          need:'impl',   head:[255,224,130],tail:[246,198,96] ,glow:[255,214,110],acc:'crown'},
+ {id:'neko',  nm:'ねこ',  cd:'果糖を20個とる',    need:'food20', head:[255,242,238],tail:[240,210,206],glow:[255,220,230],acc:'cat'},
+ {id:'oni',   nm:'鬼',    cd:'300人抜き',         need:'p300',   head:[255,138,118],tail:[226,86,78]  ,glow:[255,96,78]  ,acc:'horns'},
+ {id:'nin',   nm:'忍',    cd:'無傷で子宮腔を抜ける',need:'nohit3',head:[96,102,116] ,tail:[62,68,82]   ,glow:[120,200,255],acc:'band'},
+ {id:'surf',  nm:'潮乗り',cd:'追い潮を5回くぐる', need:'flow5',  head:[170,235,255],tail:[120,205,245],glow:[140,225,255],acc:'goggles'},
+ {id:'buta',  nm:'ブタ',  cd:'壁に30回ぶつかる',  need:'wall30', head:[255,192,206],tail:[246,160,182],glow:[255,170,200],acc:'snout'},
+ {id:'haku',  nm:'白衣',  cd:'白血球に10回捕まる',need:'cell10', head:[246,246,252],tail:[214,214,226],glow:[200,220,255],acc:'glasses'},
+ {id:'honoo', nm:'炎',    cd:'3分以内に着床',     need:'fast',   head:[255,172,84] ,tail:[255,112,40] ,glow:[255,140,40] ,acc:'flame'},
+ {id:'tenshi',nm:'天使',  cd:'被弾0で着床',       need:'perfect',head:[242,250,255],tail:[206,236,255],glow:[180,230,255],acc:'halo'},
+ {id:'uchu',  nm:'宇宙',  cd:'進捗を12個あつめる',need:'ach12',  head:[152,140,255],tail:[110,98,220] ,glow:[160,140,255],acc:'star'}
+];
+const skinOf=id=>SKINS.find(s=>s.id===id)||SKINS[0];
+const skinOK=s=>!s.need||!!SV.ach[s.need];
+let SKIN=skinOf(SV.skin); if(!skinOK(SKIN)) SKIN=SKINS[0];
+
+/* ===================== 進捗（マイクラのアレ） ===================== */
+const ACHS=[
+ {id:'start', ic:'🏊', nm:'旅立ち',     ds:'泳ぎはじめる'},
+ {id:'vag',   ic:'🧪', nm:'酸をくぐる', ds:'膣内を抜ける'},
+ {id:'cer',   ic:'🌀', nm:'粘液の迷路', ds:'子宮頸管を抜ける'},
+ {id:'ute',   ic:'🛡', nm:'縄張り突破', ds:'子宮腔を抜ける'},
+ {id:'tube',  ic:'🥚', nm:'到達',       ds:'卵子まで辿り着く'},
+ {id:'fert',  ic:'✨', nm:'受精',       ds:'卵膜をこじ開ける', rare:true},
+ {id:'impl',  ic:'👑', nm:'着床',       ds:'旅を終える',       rare:true},
+ {id:'p300',  ic:'🏁', nm:'三百人抜き', ds:'ライバルを300人抜く'},
+ {id:'food20',ic:'🍬', nm:'果糖中毒',   ds:'果糖を20個とる'},
+ {id:'flow5', ic:'🏄', nm:'潮乗り',     ds:'追い潮を5回くぐる'},
+ {id:'wall30',ic:'🧱', nm:'壁の友',     ds:'壁に30回ぶつかる'},
+ {id:'cell10',ic:'🦠', nm:'常連',       ds:'白血球に10回捕まる'},
+ {id:'nohit3',ic:'🥷', nm:'無傷',       ds:'一度も当たらず子宮腔を抜ける'},
+ {id:'fast',  ic:'🔥', nm:'韋駄天',     ds:'3分以内に着床する',  rare:true},
+ {id:'perfect',ic:'😇',nm:'完全無欠',   ds:'被弾0で着床する',    rare:true},
+ {id:'ach12', ic:'🌌', nm:'蒐集家',     ds:'進捗を12個あつめる', rare:true}
+];
+const achOf=id=>ACHS.find(a=>a.id===id);
+const achCount=()=>ACHS.reduce((n,a)=>n+(SV.ach[a.id]?1:0),0);
+function gotAch(id){
+  if(SV.ach[id]) return;
+  const a=achOf(id); if(!a) return;
+  SV.ach[id]=1; save(); mcToast(a);
+  const uq=SKINS.filter(s=>s.need===id);
+  if(uq.length) setTimeout(()=>toast('スキン解放','「'+uq[0].nm+'」がきせかえに増えた',2.4),1000);
+  if(id!=='ach12'&&achCount()>=12) setTimeout(()=>gotAch('ach12'),1500);
+}
+/* 一度に出すのは3つまで。あふれた分は順番待ち */
+const mcQ=[]; let mcShown=0;
+function mcToast(a){ mcQ.push(a); mcPump(); }
+function mcPump(){
+  while(mcShown<3 && mcQ.length){
+    const a=mcQ.shift(); mcShown++;
+    const el=document.createElement('div');
+    el.className='mcT'+(a.rare?' rare':'');
+    el.innerHTML='<div class="ic">'+a.ic+'</div><div class="tx"><div class="t1">進捗達成！</div>'+
+      '<div class="t2">'+a.nm+'</div></div>';
+    $('mct').appendChild(el);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('in')));
+    sfxAch(a.rare);
+    setTimeout(()=>{
+      el.classList.remove('in');
+      setTimeout(()=>{ el.remove(); mcShown--; mcPump(); },700);
+    }, a.rare?4800:3600);
+  }
+}
 
 /* ===================== 音 ===================== */
 const A={c:null,on:true,hb:0};
@@ -334,6 +506,17 @@ function sfxFlow(){ tone(300,.4,'sine',.1,900); noise(.4,.08,1400,.7); }
 function sfxDrill(){ tone(rnd(300,420),.07,'sawtooth',.09,rnd(500,700)); }
 function sfxWin(){ [523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,.5,'triangle',.16),i*110)); }
 function sfxLose(){ [330,262,196,131].forEach((f,i)=>setTimeout(()=>tone(f,.55,'sine',.16),i*150)); }
+function sfxAch(rare){
+  if(rare){ [784,1047,1319,1568].forEach((f,i)=>setTimeout(()=>tone(f,.6,'triangle',.13),i*95)); }
+  else { tone(1319,.42,'triangle',.12); setTimeout(()=>tone(1760,.5,'sine',.08),70); }
+}
+function sfxBoom(){
+  tone(72,1.5,'sine',.34,26); tone(110,.9,'triangle',.16,38); noise(1.1,.22,180,.6);
+}
+function sfxLand(){ tone(196,1.4,'sine',.12,392); noise(1.3,.07,340,.5); }
+function sfxBirth(){
+  [262,330,392,523,659].forEach((f,i)=>setTimeout(()=>tone(f,1.5,'triangle',.11),i*160));
+}
 
 /* ===================== 入力 ===================== */
 const keys={};
@@ -348,12 +531,27 @@ window.addEventListener('keydown',e=>{
 },{passive:false});
 window.addEventListener('keyup',e=>{keys[e.code]=false;});
 
+/* 入力が固まるのを防ぐ：ウィンドウから離れた・裏に回った時はすべて離す */
+function clearInput(){
+  for(const k in keys) keys[k]=false;
+  touchSteer=null; dashHold=false;
+  const b=$('dashBtn'); if(b) b.classList.remove('hit');
+}
+window.addEventListener('blur',clearInput);
+window.addEventListener('contextmenu',clearInput);
+document.addEventListener('visibilitychange',()=>{ if(document.hidden) clearInput(); });
+
 $('wrap').addEventListener('pointerdown',e=>{
   if(state==='egg'){ mash(); }
   if(state!=='swim'&&state!=='embryo'&&state!=='egg') return;
-  touchSteer={id:e.pointerId,x:e.clientX,y:e.clientY,ox:e.clientX,oy:e.clientY};
+  touchSteer={id:e.pointerId,x:e.clientX,y:e.clientY,type:e.pointerType};
 });
-window.addEventListener('pointermove',e=>{ if(touchSteer&&e.pointerId===touchSteer.id){touchSteer.x=e.clientX;touchSteer.y=e.clientY;} });
+window.addEventListener('pointermove',e=>{
+  if(!touchSteer||e.pointerId!==touchSteer.id) return;
+  /* ボタンが離されたのを取りこぼした場合（枠外で離す等）はここで解除する */
+  if(e.pointerType==='mouse' && e.buttons===0){ touchSteer=null; return; }
+  touchSteer.x=e.clientX; touchSteer.y=e.clientY;
+});
 window.addEventListener('pointerup',e=>{ if(touchSteer&&e.pointerId===touchSteer.id) touchSteer=null; });
 window.addEventListener('pointercancel',()=>{touchSteer=null;});
 const db=$('dashBtn');
@@ -410,6 +608,7 @@ function reset(){
   camX=0;camY=0;camZ=p.z-CAM_BACK;shake=0;
   g.t=0;g.pass=0;g.food=0;g.hits=0;g.drill=0;g.rival=0;g.eggT=0;g.cells=1;
   g.cause='';g.acc=0;g.miss=0;g.tired=false;g.saidEnd=false;
+  g.flowN=0;g.wallN=0;g.cellN=0;g.mark=0;g.land=0;g.boom=0;g.fertT=0;
   g.lastWall=-9;g.lastHit=-9;g.mashLock=false;
   ents.length=0; parts.length=0; spawnZ=60;
   dust.length=0;
@@ -424,7 +623,9 @@ function screens(on){
   $('pads').classList.toggle('on', on===null);
 }
 function start(){
-  actx(); reset(); screens(null); buildTicks(); toast('泳げ','3億分の1の旅がはじまる',2.0);
+  actx(); reset(); screens(null); buildRibbon();
+  toast('泳げ','3億分の1の旅がはじまる',2.0);
+  setTimeout(()=>gotAch('start'),600);
 }
 function over(why){
   state='over'; g.cause=why||'';
@@ -450,9 +651,160 @@ function clearGame(){
   $('cPass').textContent=g.pass.toLocaleString('ja-JP');
   $('cHit').textContent=g.hits+' 回';
   $('cHp').textContent=Math.round(p.hp);
-  if(!best||g.t<best.t){ best={t:g.t,rank:rank}; try{localStorage.setItem('seishi_best',JSON.stringify(best));}catch(e){} }
+  if(!best||g.t<best.t) best={t:g.t,rank:rank};
+  save();
   $('cBest').textContent=best?fmt(best.t)+'（'+best.rank+'）':'—';
-  screens('scClear'); sfxWin();
+  screens('scClear'); sfxBirth();
+  gotAch('impl');
+  if(g.t<180) setTimeout(()=>gotAch('fast'),700);
+  if(g.hits===0) setTimeout(()=>gotAch('perfect'),1400);
+}
+
+/* ===================== 着床のフィナーレ ===================== */
+const HIGE="'大髭115','大髭113','白舟大髭','Dela Gothic One',sans-serif";
+/* 本物の「大髭」が入っている環境か判定する。入っていれば字自体に髭も虫食いもあるので、
+   こちらで足す荒らしはごく控えめにする（入っていない人は Dela Gothic One に足す） */
+let HAS_HIGE=false;
+(function(){
+  try{
+    const sig=f=>{
+      const c=document.createElement('canvas'); c.width=64; c.height=64;
+      const x=c.getContext('2d');
+      x.font='400 48px '+f; x.textBaseline='middle'; x.textAlign='center';
+      x.fillText('着',32,32);
+      const d=x.getImageData(0,0,64,64).data; let h=0;
+      for(let i=3;i<d.length;i+=4) h=(h*31+d[i])|0;
+      return h;
+    };
+    HAS_HIGE = sig('"大髭115","大髭113","白舟大髭"') !== sig('sans-serif');
+  }catch(e){}
+})();
+let _imp={};
+/* 「大髭」が無い環境でも近い質感になるよう、太い字に虫食い・かすれ・墨はねを足す */
+function impactText(txt){
+  if(_imp[txt]) return _imp[txt];
+  const fs=360, c=document.createElement('canvas');
+  c.width=Math.ceil(fs*txt.length*1.22+fs*0.8);
+  c.height=Math.ceil(fs*1.75);
+  const x=c.getContext('2d'), cx=c.width/2, cy=c.height/2;
+  x.font=(HAS_HIGE?'400 ':'900 ')+fs+'px '+HIGE;   /* 大髭に合成ボールドをかけない */
+  x.textAlign='center'; x.textBaseline='middle';
+  const g2=x.createLinearGradient(0,cy-fs*.62,0,cy+fs*.62);
+  g2.addColorStop(0,'#fffdf4'); g2.addColorStop(.36,'#ffdf8e');
+  g2.addColorStop(.72,'#ff8f3a'); g2.addColorStop(1,'#d8302a');
+  x.fillStyle=g2; x.fillText(txt,cx,cy);
+  const NH=HAS_HIGE?12:46, NL=HAS_HIGE?2:7, NS=HAS_HIGE?18:34;
+  x.globalCompositeOperation='destination-out';
+  for(let i=0;i<NH;i++){
+    const h1=hash(i,11),h2=hash(i,29),h3=hash(i,47);
+    x.beginPath();
+    x.ellipse(cx+(h1-.5)*c.width*.9, cy+(h2-.5)*fs*1.0,
+              fs*(.008+h3*.026), fs*(.007+h1*h3*.03), h2*3,0,TAU);
+    x.fill();
+  }
+  x.lineCap='round';
+  for(let i=0;i<NL;i++){
+    const h1=hash(i,61),h2=hash(i,83);
+    x.lineWidth=fs*(.004+h2*.007);
+    x.beginPath();
+    x.moveTo(0, cy+(h1-.5)*fs*.95);
+    x.lineTo(c.width, cy+(h1-.5)*fs*.95+(h2-.5)*fs*.08);
+    x.stroke();
+  }
+  x.globalCompositeOperation='source-over';
+  for(let i=0;i<NS;i++){
+    const h1=hash(i,101),h2=hash(i,137),h3=hash(i,151);
+    x.globalAlpha=.3+h3*.55;
+    x.fillStyle=h3>.5?'#ffd68a':'#ff7a3c';
+    x.beginPath();
+    x.arc(cx+(h1-.5)*c.width*1.02, cy+(h2-.5)*fs*1.85, fs*(.005+h3*.02),0,TAU);
+    x.fill();
+  }
+  x.globalAlpha=1;
+  _imp[txt]=c; return c;
+}
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ _imp={}; });
+
+function startLanding(px,py){
+  state='land'; g.land=0; g.boom=0; g.px=px; g.py=py; shake=3; sfxLand();
+  $('qte').classList.remove('on');
+  $('hud').classList.remove('on');          /* 演出の邪魔になるHUDは引っ込める */
+  toastT=0; $('toast').style.opacity=0; $('sub2').style.opacity=0;
+}
+function updateLand(dt){
+  time+=dt; g.land+=dt; g.t+=dt;
+  const t=g.land;
+  p.x=lerp(p.x,g.px,1-Math.pow(0.03,dt));
+  p.y=lerp(p.y,g.py,1-Math.pow(0.03,dt));
+  const tz=IMPLANT_Z+(t<0.95? t*1.15 : 1.1+(t-0.95)*0.1);
+  p.z=lerp(p.z,tz,1-Math.pow(0.08,dt));
+  camX=lerp(camX,g.px,1-Math.pow(0.06,dt));
+  camY=lerp(camY,g.py-0.25,1-Math.pow(0.06,dt));
+  camZ=p.z-CAM_BACK*(1-clamp(t*0.45,0,0.5));
+  p.phase+=dt*4;
+  if(t>0.92 && !g.boom){
+    g.boom=1; flashWhite=1; shake=18; sfxBoom();
+    burst(W*.5,H*.5,80,[255,238,205],2.4);
+    setTimeout(()=>burst(W*.5,H*.5,44,[255,176,138],1.7),150);
+  }
+  if(shake>0) shake=Math.max(0,shake-dt*22);
+  if(flashWhite>0) flashWhite=Math.max(0,flashWhite-dt*1.15);
+  const k=Math.pow(0.03,dt);
+  for(let i=parts.length-1;i>=0;i--){
+    const q=parts[i]; q.life-=dt*0.72;
+    if(q.life<=0){ parts.splice(i,1); continue; }
+    q.x+=q.vx*dt; q.y+=q.vy*dt; q.vx*=k; q.vy=q.vy*k+70*dt;
+  }
+  if(t>4.0) clearGame();
+}
+function drawLand(){
+  const t=g.land, cx=W*0.5, cy=H*0.5;
+  if(t>0.92){
+    for(let k=0;k<3;k++){
+      const u=(t-0.92-k*0.17)/0.95;
+      if(u<=0||u>1) continue;
+      ctx.strokeStyle='rgba(255,242,218,'+((1-u)*0.55).toFixed(3)+')';
+      ctx.lineWidth=(1-u)*18+1;
+      ctx.beginPath(); ctx.arc(cx,cy,u*Math.max(W,H)*0.8,0,TAU); ctx.stroke();
+    }
+    /* 字を立たせるために背景を一段落とす */
+    ctx.fillStyle='rgba(52,8,20,'+(clamp((t-0.95)/0.55,0,1)*0.46).toFixed(3)+')';
+    ctx.fillRect(0,0,W,H);
+    const a=clamp((t-0.95)/0.5,0,1)*0.30*clamp((4.0-t)/1.3,0,1);
+    ctx.save(); ctx.globalCompositeOperation='lighter';
+    for(let i=0;i<24;i++){
+      const ang=i/24*TAU+time*0.07;
+      ctx.strokeStyle='rgba(255,215,160,'+(a*(0.2+0.6*hash(i,3))).toFixed(3)+')';
+      ctx.lineWidth=2+hash(i,9)*9;
+      ctx.beginPath(); ctx.moveTo(cx,cy);
+      ctx.lineTo(cx+Math.cos(ang)*Math.max(W,H),cy+Math.sin(ang)*Math.max(W,H));
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  if(t>1.12){
+    const u=clamp((t-1.12)/0.40,0,1);
+    const e=1+Math.pow(1-u,3)*6.5;
+    const al=clamp((t-1.12)/0.16,0,1)*clamp((4.1-t)/0.55,0,1);
+    const sp=impactText('着床');
+    const base=Math.min(W,H)*0.72/sp.width;
+    const w=sp.width*base*e, h=sp.height*base*e;
+    ctx.save();
+    ctx.translate(cx,cy-H*0.09);
+    ctx.rotate(-0.04+Math.pow(1-u,2)*0.22);
+    ctx.globalAlpha=al;
+    ctx.drawImage(sp,-w/2,-h/2,w,h);
+    ctx.restore();
+    if(t>1.65){
+      ctx.save();
+      ctx.globalAlpha=clamp((t-1.65)/0.45,0,1)*clamp((4.1-t)/0.55,0,1)*0.92;
+      ctx.fillStyle='#fff2dd';
+      ctx.font='700 '+Math.round(Math.min(W,H)*0.031)+'px sans-serif';
+      ctx.textAlign='center';
+      ctx.fillText('ここから、ぜんぶが始まる',cx,cy+H*0.21);
+      ctx.restore();
+    }
+  }
 }
 function togglePause(){
   if(state==='swim'||state==='egg'||state==='embryo'){ prevState=state; state='pause'; screens('scPause'); }
@@ -464,15 +816,112 @@ $('bTitle1').onclick=$('bTitle2').onclick=()=>{state='title';screens('scTitle');
 $('bResume').onclick=togglePause;
 $('bGiveUp').onclick=()=>{state='title';screens('scTitle');};
 
-function buildTicks(){
-  const el=$('ticks'); el.innerHTML='';
+/* ===================== 流れる場所バー ===================== */
+const PPU=1.15;
+let rdoneEl=null;
+function buildRibbon(){
+  const tr=$('rtrack');
+  tr.innerHTML='';
+  tr.style.width=(IMPLANT_Z*PPU+140)+'px';
+  rdoneEl=document.createElement('i'); rdoneEl.id='rdone'; tr.appendChild(rdoneEl);
   ALL.forEach((s,i)=>{
-    const z0=i?ALL[i-1].end:0, mid=(z0+s.end)/2;
-    const d=document.createElement('i');
-    d.textContent=(s.name==='卵管（帰路）'?'帰路':s.name); d.style.left=(mid/IMPLANT_Z*100)+'%';
-    el.appendChild(d);
+    const z0=i?ALL[i-1].end:0;
+    const d=document.createElement('div'); d.className='seg';
+    d.style.left=(z0*PPU)+'px';
+    d.style.width=Math.max(2,(s.end-z0)*PPU-3)+'px';
+    d.style.background='linear-gradient(180deg,'+rgba(s.cl,.55)+','+rgba(s.cw,.82)+')';
+    d.innerHTML='<b>'+(s.name==='卵管（帰路）'?'卵管・帰路':s.name)+'</b>';
+    tr.appendChild(d);
   });
+  for(let z=0;z<=IMPLANT_Z;z+=50){
+    const big=(z%250===0);
+    const k=document.createElement('div');
+    k.className='tk'+(big?' b':''); k.style.left=(z*PPU)+'px';
+    if(big&&z>0) k.innerHTML='<i>'+(z/IMPLANT_Z*TOTAL_CM).toFixed(0)+'cm</i>';
+    tr.appendChild(k);
+  }
+  const eg=document.createElement('div'); eg.className='rgoal';
+  eg.style.left=(EGG_Z*PPU)+'px'; eg.textContent='🥚卵子'; tr.appendChild(eg);
+  const go=document.createElement('div'); go.className='rgoal';
+  go.style.left=(IMPLANT_Z*PPU)+'px'; go.textContent='▌着床'; tr.appendChild(go);
 }
+function ribbon(){
+  $('rtrack').style.transform='translateX('+(W*0.5-p.z*PPU).toFixed(1)+'px)';
+  if(rdoneEl) rdoneEl.style.width=Math.max(0,p.z*PPU).toFixed(1)+'px';
+}
+
+/* ===================== きせかえ／進捗の画面 ===================== */
+let prevT=0, prevTimer=null;
+function previewSkin(cv2,s){
+  const c=cv2.getContext('2d'), w=cv2.width, h=cv2.height;
+  c.clearRect(0,0,w,h);
+  const r=h*0.27, x=w*0.62, y=h*0.54;
+  c.lineCap='round';
+  for(let i=0;i<15;i++){
+    const t=i/15, t2=(i+1)/15;
+    const px=x-r*1.05-t*r*3.1,  py=y+Math.sin(t*5.2+prevT)*r*0.6*t;
+    const nx=x-r*1.05-t2*r*3.1, ny=y+Math.sin(t2*5.2+prevT)*r*0.6*t2;
+    c.strokeStyle=rgba(s.tail,0.42+0.55*(1-t));
+    c.lineWidth=Math.max(1,r*0.54*Math.pow(1-t,0.8));
+    c.beginPath(); c.moveTo(px,py); c.lineTo(nx,ny); c.stroke();
+  }
+  paintHead(c,x,y,r,s,prevT);
+}
+function paintPreviews(){
+  const cs=document.querySelectorAll('#skinGrid .sCard');
+  for(let i=0;i<cs.length;i++) if(cs[i]._cv) previewSkin(cs[i]._cv,cs[i]._skin);
+}
+function buildSkinGrid(){
+  const g=$('skinGrid'); g.innerHTML='';
+  SKINS.forEach(s=>{
+    const ok=skinOK(s);
+    const d=document.createElement('div');
+    d.className='sCard'+(s.id===SKIN.id?' sel':'')+(ok?'':' lk');
+    const c=document.createElement('canvas');
+    c.width=148; c.height=92; c.style.width='74px'; c.style.height='46px';
+    d.appendChild(c);
+    const nm=document.createElement('div'); nm.className='nm'; nm.textContent=ok?s.nm:'？？？';
+    const cd=document.createElement('div'); cd.className='cd'; cd.textContent=ok?'':s.cd;
+    d.appendChild(nm); d.appendChild(cd);
+    d.onclick=()=>{
+      if(!ok){ tone(170,.13,'square',.07); d.animate(
+        [{transform:'translateX(0)'},{transform:'translateX(-5px)'},
+         {transform:'translateX(5px)'},{transform:'translateX(0)'}],{duration:220}); return; }
+      SKIN=s; SV.skin=s.id; save(); buildSkinGrid(); sfxPick();
+    };
+    d._cv=c; d._skin=s;
+    g.appendChild(d);
+  });
+  paintPreviews();
+}
+function buildAchList(){
+  const l=$('achList'); l.innerHTML='';
+  ACHS.forEach(a=>{
+    const got=!!SV.ach[a.id];
+    const d=document.createElement('div'); d.className='aRow'+(got?' got':'');
+    d.innerHTML='<div class="ic">'+a.ic+'</div><div><div class="nm">'+
+      (got?a.nm:'？？？')+'</div><div class="ds">'+a.ds+'</div></div>';
+    l.appendChild(d);
+  });
+  $('achCount').textContent='達成 '+achCount()+' / '+ACHS.length;
+}
+function openPanel(id){
+  $(id).classList.add('on');
+  if(id==='pSkin'){
+    buildSkinGrid();
+    if(prevTimer) clearInterval(prevTimer);
+    prevTimer=setInterval(()=>{ prevT+=0.075; paintPreviews(); },55);
+  }
+  if(id==='pAch') buildAchList();
+}
+function closePanel(id){
+  $(id).classList.remove('on');
+  if(id==='pSkin'&&prevTimer){ clearInterval(prevTimer); prevTimer=null; }
+}
+$('bSkins').onclick=()=>openPanel('pSkin');
+$('bAchs').onclick=()=>openPanel('pAch');
+$('bSkinClose').onclick=()=>closePanel('pSkin');
+$('bAchClose').onclick=()=>closePanel('pAch');
 
 /* ===================== 出現 ===================== */
 function spawnOne(t,z,tb,extra){
@@ -522,7 +971,8 @@ function update(dt){
   if(keys.ArrowRight||keys.KeyD) ix+=1;
   if(keys.ArrowUp||keys.KeyW) iy-=1;
   if(keys.ArrowDown||keys.KeyS) iy+=1;
-  if(touchSteer){
+  /* キーが押されている間はキーを優先（ポインタが固まっても操作不能にならない） */
+  if(!ix && !iy && touchSteer){
     const dx=(touchSteer.x-W*0.5)/(W*0.30), dy=(touchSteer.y-H*0.56)/(H*0.30);
     ix=clamp(dx,-1,1); iy=clamp(dy,-1,1);
   }
@@ -572,17 +1022,28 @@ function update(dt){
       p.spd*=Math.pow(0.45,dt);            /* 壁ズリ摩擦（フレーム非依存） */
       if(time-g.lastWall>0.95 && vn>2.0){
         p.spd*=0.82;
-        g.lastWall=time; damage(DMG.wall,'hp');
+        g.lastWall=time; g.wallN++; damage(DMG.wall,'hp');
         toast('壁に激突','',0.7);
         const pr=project(p.x,p.y,p.z); if(pr) burst(pr.x,pr.y,10,[255,140,160]);
       }
     }
 
+    /* 進捗 */
+    if(g.mark<1 && p.z>ALL[0].end){ g.mark=1; gotAch('vag'); }
+    else if(g.mark<2 && p.z>ALL[1].end){ g.mark=2; gotAch('cer'); }
+    else if(g.mark<3 && p.z>ALL[2].end){ g.mark=3; gotAch('ute'); if(g.hits===0) gotAch('nohit3'); }
+    if(g.pass>=300) gotAch('p300');
+    if(g.food>=20) gotAch('food20');
+    if(g.flowN>=5) gotAch('flow5');
+    if(g.wallN>=30) gotAch('wall30');
+    if(g.cellN>=10) gotAch('cell10');
+
     /* 受精イベント突入 */
     if(state==='swim' && p.z>EGG_Z-11){
       state='egg'; g.eggT=13; g.drill=0; g.rival=0;
       $('qte').classList.add('on');
-      toast('卵子','たどり着いた。こじ開けろ',1.8);
+      toast('卵子','たどり着いた。こじ開けろ！',2.2);
+      gotAch('tube');
     }
     /* 着床判定 */
     if(state==='embryo' && p.z>IMPLANT_Z-1.2){
@@ -590,7 +1051,7 @@ function update(dt){
       const px=t2.x+Math.cos(PATCH_A)*t2.r*PATCH_RR, py=t2.y+Math.sin(PATCH_A)*t2.r*PATCH_RR;
       const d2=Math.hypot(p.x-px,p.y-py)/(t2.r*PATCH_HIT);
       g.acc=d2;
-      if(d2<=1){ clearGame(); }
+      if(d2<=1){ startLanding(px,py); }
       else {
         g.miss++;
         if(g.miss>=3){ over('miss'); }
@@ -620,7 +1081,7 @@ function update(dt){
       spawnZ=Math.max(spawnZ,p.z+10);
       ents=ents.filter(e=>e.z>p.z+14);
       toast('受精','ここから、きみは「胚」になる',2.6);
-      flashWhite=1; sfxWin();
+      flashWhite=1; sfxWin(); gotAch('fert'); g.fertT=time;
       for(let i=0;i<5;i++) setTimeout(()=>burst(W*0.5,H*0.45,26,[255,245,210],1.6),i*70);
     } else if(g.rival>=100 || g.eggT<=0){
       over('rival');
@@ -687,13 +1148,13 @@ function update(dt){
           ents.splice(i,1); continue;
         }
         if(e.t==='flow'){
-          e.done=true; p.boost=1.7; p.st=Math.min(100,p.st+12);
+          e.done=true; g.flowN++; p.boost=1.7; p.st=Math.min(100,p.st+12);
           sfxFlow(); if(pr) burst(pr.x,pr.y,22,[190,240,255],1.4);
           toast('追い潮','加速！',0.9);
           continue;
         }
         e.done=true;
-        if(e.t==='cell'){ damage(DMG.cell,'hp'); toast('白血球に捕まった','',0.9);
+        if(e.t==='cell'){ g.cellN++; damage(DMG.cell,'hp'); toast('白血球に捕まった','',0.9);
           p.spd*=0.45; p.vx*=-0.6; p.vy*=-0.6; }
         else if(e.t==='clot'){ damage(DMG.clot,'hp'); toast('粘液に絡まる','',0.8); p.spd*=0.55; }
         else if(e.t==='acid'){ damage(DMG.acid,'hp'); toast('酸にやられた','',0.8); }
@@ -737,7 +1198,7 @@ function hud(){
   $('hpF').style.width=clamp(p.hp,0,100)+'%';
   $('stF').style.width=clamp(p.st,0,100)+'%';
   const pg=clamp(p.z/IMPLANT_Z,0,1);
-  $('progF').style.width=(pg*100)+'%';
+  ribbon();
   const sp=paramsAt(p.z);
   if($('stName').textContent!==sp.name){ $('stName').textContent=sp.name; $('stSub').textContent=sp.sub; }
   $('iDist').textContent=(pg*TOTAL_CM).toFixed(1);
@@ -802,7 +1263,109 @@ function drawTube(){
   }
 }
 
-function drawSperm(x,y,z,ph,amp,sc,head,tail,glow){
+/* --- 頭と装飾（画面座標。ゲーム中もきせかえ画面のプレビューも同じ関数を使う） --- */
+function paintAcc(c,x,y,r,acc,t){
+  if(!acc||acc==='none') return;
+  c.save(); c.lineJoin='round'; c.lineCap='round';
+  const top=y-r*1.2;
+  if(acc==='crown'){
+    c.fillStyle='#ffd45e'; c.strokeStyle='#b07a10'; c.lineWidth=Math.max(.8,r*.07);
+    c.beginPath();
+    c.moveTo(x-r*.9,top+r*.14); c.lineTo(x-r*.9,top-r*.5);
+    c.lineTo(x-r*.45,top-r*.12); c.lineTo(x,top-r*.68);
+    c.lineTo(x+r*.45,top-r*.12); c.lineTo(x+r*.9,top-r*.5);
+    c.lineTo(x+r*.9,top+r*.14); c.closePath(); c.fill(); c.stroke();
+    c.fillStyle='#ff5a7a'; c.beginPath(); c.arc(x,top-r*.06,r*.13,0,TAU); c.fill();
+  } else if(acc==='cat'){
+    [-1,1].forEach(s=>{
+      c.fillStyle='#ffe3ea'; c.strokeStyle='#d98ba0'; c.lineWidth=Math.max(.8,r*.06);
+      c.beginPath();
+      c.moveTo(x+s*r*.26,top+r*.3); c.lineTo(x+s*r*.60,top-r*.62); c.lineTo(x+s*r*.92,top+r*.12);
+      c.closePath(); c.fill(); c.stroke();
+      c.fillStyle='#ff9bb5';
+      c.beginPath();
+      c.moveTo(x+s*r*.42,top+r*.18); c.lineTo(x+s*r*.60,top-r*.32); c.lineTo(x+s*r*.78,top+r*.08);
+      c.closePath(); c.fill();
+    });
+  } else if(acc==='horns'){
+    [-1,1].forEach(s=>{
+      c.fillStyle='#fff0d6'; c.strokeStyle='#c89b5a'; c.lineWidth=Math.max(.8,r*.06);
+      c.beginPath();
+      c.moveTo(x+s*r*.30,top+r*.32);
+      c.quadraticCurveTo(x+s*r*1.02,top-r*.08,x+s*r*.80,top-r*.80);
+      c.quadraticCurveTo(x+s*r*.62,top-r*.16,x+s*r*.10,top+r*.32);
+      c.closePath(); c.fill(); c.stroke();
+    });
+  } else if(acc==='band'){
+    const w=Math.sin(t*7)*r*.34;
+    c.strokeStyle='#f5f2ea'; c.lineWidth=Math.max(1,r*.14);
+    c.beginPath(); c.moveTo(x-r*.85,y-r*.52);
+    c.quadraticCurveTo(x-r*1.55,y-r*.3+w,x-r*2.05,y+w*1.3); c.stroke();
+    c.fillStyle='#f5f2ea'; c.strokeStyle='#cfc8b8'; c.lineWidth=Math.max(.6,r*.05);
+    c.beginPath(); c.ellipse(x,y-r*.54,r*1.0,r*.26,0,0,TAU); c.fill(); c.stroke();
+    c.fillStyle='#e03a4e'; c.beginPath(); c.arc(x+r*.04,y-r*.56,r*.2,0,TAU); c.fill();
+  } else if(acc==='goggles'){
+    c.strokeStyle='#2b3a46'; c.lineWidth=Math.max(1,r*.15);
+    c.beginPath(); c.moveTo(x-r*.98,y-r*.22); c.lineTo(x+r*.98,y-r*.22); c.stroke();
+    [-1,1].forEach(s=>{
+      c.fillStyle='rgba(150,235,255,.85)'; c.strokeStyle='#2b3a46'; c.lineWidth=Math.max(.8,r*.09);
+      c.beginPath(); c.arc(x+s*r*.4,y-r*.2,r*.33,0,TAU); c.fill(); c.stroke();
+    });
+  } else if(acc==='glasses'){
+    c.strokeStyle='#30343c'; c.lineWidth=Math.max(.9,r*.07);
+    [-1,1].forEach(s=>{
+      c.fillStyle='rgba(255,255,255,.35)';
+      c.beginPath(); c.ellipse(x+s*r*.44,y-r*.15,r*.33,r*.27,0,0,TAU); c.fill(); c.stroke();
+    });
+    c.beginPath(); c.moveTo(x-r*.11,y-r*.15); c.lineTo(x+r*.11,y-r*.15); c.stroke();
+  } else if(acc==='snout'){
+    c.fillStyle='#ff9bb0'; c.strokeStyle='#e0708c'; c.lineWidth=Math.max(.6,r*.05);
+    c.beginPath(); c.ellipse(x,y+r*.14,r*.44,r*.33,0,0,TAU); c.fill(); c.stroke();
+    c.fillStyle='#c4546e';
+    c.beginPath(); c.ellipse(x-r*.16,y+r*.14,r*.08,r*.12,0,0,TAU); c.fill();
+    c.beginPath(); c.ellipse(x+r*.16,y+r*.14,r*.08,r*.12,0,0,TAU); c.fill();
+  } else if(acc==='halo'){
+    c.strokeStyle='rgba(255,240,170,.95)'; c.lineWidth=Math.max(1.2,r*.13);
+    c.shadowColor='rgba(255,230,140,.9)'; c.shadowBlur=r*.9;
+    c.beginPath(); c.ellipse(x,top-r*.62,r*.78,r*.26,0,0,TAU); c.stroke();
+    c.shadowBlur=0;
+  } else if(acc==='flame'){
+    for(let i=-1;i<=1;i++){
+      const f=Math.sin(t*9+i*1.7)*0.18+1, h=r*(1.0+(i===0?0.5:0))*f;
+      c.fillStyle=i===0?'rgba(255,232,150,.95)':'rgba(255,140,50,.88)';
+      c.beginPath();
+      c.moveTo(x+i*r*.46-r*.27,top+r*.2);
+      c.quadraticCurveTo(x+i*r*.46,top-h*.55,x+i*r*.46,top-h);
+      c.quadraticCurveTo(x+i*r*.46,top-h*.55,x+i*r*.46+r*.27,top+r*.2);
+      c.closePath(); c.fill();
+    }
+  } else if(acc==='star'){
+    for(let i=0;i<5;i++){
+      const a=t*1.5+i/5*TAU, sx=x+Math.cos(a)*r*1.55, sy=y+Math.sin(a)*r*1.1;
+      const s2=r*(.13+.07*Math.sin(t*5+i));
+      c.fillStyle='rgba(225,215,255,'+(0.45+0.5*Math.sin(t*4+i)).toFixed(2)+')';
+      c.beginPath();
+      c.moveTo(sx,sy-s2); c.lineTo(sx+s2*.33,sy-s2*.33); c.lineTo(sx+s2,sy);
+      c.lineTo(sx+s2*.33,sy+s2*.33); c.lineTo(sx,sy+s2); c.lineTo(sx-s2*.33,sy+s2*.33);
+      c.lineTo(sx-s2,sy); c.lineTo(sx-s2*.33,sy-s2*.33); c.closePath(); c.fill();
+    }
+  }
+  c.restore();
+}
+function paintHead(c,x,y,r,skin,t){
+  const gd=c.createRadialGradient(x-r*.35,y-r*.45,r*.1,x,y,r*1.1);
+  gd.addColorStop(0,rgba(mix(skin.head,[255,255,255],.6),1));
+  gd.addColorStop(.6,rgba(skin.head,1));
+  gd.addColorStop(1,rgba(mix(skin.head,[70,20,35],.55),1));
+  c.fillStyle=gd;
+  c.beginPath(); c.ellipse(x,y,r*0.96,r*1.2,0,0,TAU); c.fill();
+  c.strokeStyle=rgba(mix(skin.head,[255,255,255],.75),.55); c.lineWidth=Math.max(.6,r*.1);
+  c.beginPath(); c.ellipse(x,y,r*0.96,r*1.2,0,0,TAU); c.stroke();
+  paintAcc(c,x,y,r,skin.acc,t);
+}
+const RIVAL_SKIN={head:[196,198,206],tail:[150,152,162],acc:'none'};
+
+function drawSperm(x,y,z,ph,amp,sc,skin,glow){
   /* 頭が一番奥（カメラから遠い）→ 先に頭、あとから手前にのびる尾を重ねる */
   const N=18, pts=[];
   for(let i=0;i<=N;i++){
@@ -819,20 +1382,12 @@ function drawSperm(x,y,z,ph,amp,sc,head,tail,glow){
     g2.addColorStop(0,rgba(glow,.34)); g2.addColorStop(1,rgba(glow,0));
     ctx.fillStyle=g2; ctx.beginPath(); ctx.arc(h.x,h.y,hr*3.0,0,TAU); ctx.fill();
   }
-  const gd=ctx.createRadialGradient(h.x-hr*.35,h.y-hr*.45,hr*.1,h.x,h.y,hr*1.1);
-  gd.addColorStop(0,rgba(mix(head,[255,255,255],.6),1));
-  gd.addColorStop(.6,rgba(head,1));
-  gd.addColorStop(1,rgba(mix(head,[70,20,35],.55),1));
-  ctx.fillStyle=gd;
-  ctx.beginPath(); ctx.ellipse(h.x,h.y,hr*0.96,hr*1.2,0,0,TAU); ctx.fill();
-  ctx.strokeStyle=rgba(mix(head,[255,255,255],.75),.55); ctx.lineWidth=Math.max(.6,hr*.1);
-  ctx.beginPath(); ctx.ellipse(h.x,h.y,hr*0.96,hr*1.2,0,0,TAU); ctx.stroke();
-
+  paintHead(ctx,h.x,h.y,hr,skin,time);
   ctx.lineCap='round';
   for(let i=0;i<pts.length-1;i++){
     const a=pts[i],b=pts[i+1], tt=(a.t+b.t)*0.5;
     const thick=(tt<0.17?0.66:0.50)*Math.pow(1-tt,0.78)*(b.s/h.s);
-    ctx.strokeStyle=rgba(tail,0.42+0.56*(1-tt));
+    ctx.strokeStyle=rgba(skin.tail,0.42+0.56*(1-tt));
     ctx.lineWidth=Math.max(1.1,hr*thick);
     ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
   }
@@ -908,7 +1463,7 @@ function drawEnt(e){
     ctx.globalAlpha=1;
   } else if(e.t==='rival'){
     ctx.globalAlpha=fade*0.92;
-    drawSperm(e.x,e.y,e.z,e.ph*5+e.seed,0.22,0.78,[196,198,206],[150,152,162],null);
+    drawSperm(e.x,e.y,e.z,e.ph*5+e.seed,0.22,0.78,RIVAL_SKIN,null);
     ctx.globalAlpha=1;
   } else if(e.t==='food'){
     ctx.globalAlpha=fade;
@@ -1092,6 +1647,19 @@ function render(){
   }
   ctx.restore();
 
+  if(state==='land') drawLand();
+
+  if(g.fertT && state==='embryo' && time-g.fertT<1.7){
+    const t=time-g.fertT, u=clamp(t/0.35,0,1), sp=impactText('受精');
+    const base=Math.min(W,H)*0.62/sp.width, e=1+Math.pow(1-u,3)*5;
+    const w=sp.width*base*e, h=sp.height*base*e;
+    ctx.save(); ctx.translate(W*0.5,H*0.42);
+    ctx.rotate(-0.05+Math.pow(1-u,2)*0.18);
+    ctx.globalAlpha=clamp(t/0.12,0,1)*clamp((1.7-t)/0.45,0,1);
+    ctx.drawImage(sp,-w/2,-h/2,w,h);
+    ctx.restore();
+  }
+
   if(flashWhite>0){
     ctx.fillStyle='rgba(255,250,245,'+(flashWhite*0.9).toFixed(3)+')';
     ctx.fillRect(0,0,W,H);
@@ -1104,12 +1672,11 @@ function render(){
 }
 
 function drawPlayer(){
-  if(state==='embryo'){ drawEmbryo(p.x,p.y,p.z,1); return; }
+  if(state==='embryo'||state==='land'){ drawEmbryo(p.x,p.y,p.z,1); return; }
   const dashing=p.spd>24;
   const amp=0.30+clamp(p.spd/34,0,1)*0.34;
-  drawSperm(p.x,p.y,p.z,p.phase,amp,1,
-    [255,236,228],[255,200,205],
-    dashing?[255,190,210]:(p.boost>0?[160,240,255]:null));
+  drawSperm(p.x,p.y,p.z,p.phase,amp,1,SKIN,
+    dashing?SKIN.glow:(p.boost>0?[160,240,255]:null));
 }
 
 /* ===================== タイトル演出用のループ ===================== */
@@ -1148,6 +1715,7 @@ function loop(now){
     render();
     requestAnimationFrame(loop); return;
   }
+  if(state==='land'){ updateLand(dt); render(); requestAnimationFrame(loop); return; }
   update(dt);
   render();
   requestAnimationFrame(loop);
@@ -1155,7 +1723,7 @@ function loop(now){
 
 /* ===================== 起動 ===================== */
 resize();
-reset(); state='title'; screens('scTitle'); buildTicks();
+reset(); state='title'; screens('scTitle'); buildRibbon();
 lastT=performance.now()/1000;
 requestAnimationFrame(loop);
 
@@ -1163,6 +1731,13 @@ requestAnimationFrame(loop);
 window.__seishi=window.__swim={
   jump:function(z){ p.z=z; spawnZ=Math.max(spawnZ,z+12); ents.length=0; },
   heal:function(){ p.hp=100; p.st=100; },
+  finale:function(){
+    const t2=tube(IMPLANT_Z);
+    state='embryo'; g.cells=32; g.saidEnd=true; p.z=IMPLANT_Z-3; p.spd=14;
+    p.x=t2.x+Math.cos(PATCH_A)*t2.r*PATCH_RR;
+    p.y=t2.y+Math.sin(PATCH_A)*t2.r*PATCH_RR;
+    ents.length=0;
+  },
   info:function(){ return {state:state,z:Math.round(p.z),hp:Math.round(p.hp),st:Math.round(p.st),pass:g.pass}; }
 };
 
