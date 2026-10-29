@@ -104,12 +104,14 @@
   #achHidden .nm{color:#9affd0}
   #achCount{font-size:11px;opacity:.6;margin-top:12px;letter-spacing:.1em}
   /* タイトルの「いまの位」。段の一覧は出さない（本人の指定） */
+  .rkIc{display:inline-block;vertical-align:-3px;
+    filter:drop-shadow(0 1px 3px #000c) drop-shadow(0 0 6px #ffffff35)}
+  #plRank #plRankIc{display:flex;margin-right:-5px}
   #plRank{display:flex;align-items:center;gap:11px;margin:14px auto 2px;width:max-content;
     max-width:94vw;padding:7px 15px;border-radius:999px;
     background:#ffffff0d;border:1px solid #ffffff21}
   #plRank .k{font-size:10px;letter-spacing:.2em;opacity:.5}
-  #plRank .v{font-size:15px;font-weight:800;letter-spacing:.08em;color:#ffe14d;
-    text-shadow:0 0 14px #ffb03d66}
+  #plRank .v{font-size:15px;font-weight:800;letter-spacing:.08em;color:#ffe14d}
   #plRank .f{font-size:10px;opacity:.45;letter-spacing:.06em}
   #plRank .f b{font-variant-numeric:tabular-nums;opacity:.9}
   .subBtns{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;justify-content:center}
@@ -304,7 +306,8 @@
     <div class="tag">A LONG SWIM TO LIFE</div>
     <h1 id="titleH1">精子</h1>
     <div class="tag" style="margin-top:12px">— 着床までの旅 —</div>
-    <div id="plRank"><span class="k">いまの位</span><span class="v" id="plRankN">見習い</span>
+    <div id="plRank"><span class="k">いまの位</span><span id="plRankIc"></span>
+      <span class="v" id="plRankN">シルバー</span>
       <span class="f">ためた果糖 <b id="plRankF">0</b></span></div>
     <p class="lead">きみは3億分の1の精子。<br>
       酸の海、粘液の迷路、白血球の縄張りを抜け、<br>
@@ -532,9 +535,39 @@ function save(){ SV.best=best; try{ localStorage.setItem('seishi_save',JSON.stri
 
 /* ===================== 位（ためた果糖で上がる） =====================
    果糖5000個でマスター。段の名前も数も画面には出さない（本人の指定）。 */
-const RANKS=[{at:0,nm:'見習い'},{at:60,nm:'泳ぎ手'},{at:180,nm:'常連'},
-  {at:400,nm:'一人前'},{at:750,nm:'手練'},{at:1250,nm:'精鋭'},{at:1900,nm:'達人'},
-  {at:2700,nm:'猛者'},{at:3700,nm:'伝説'},{at:5000,nm:'マスター'}];
+const RANKS=[
+ {at:0,    nm:'シルバー', k:'gem',   c:['#ffffff','#b9c6d4','#6b7889']},
+ {at:600,  nm:'ゴールド', k:'gem',   c:['#fff6cf','#f0c250','#9e6c14']},
+ {at:1600, nm:'プラチナ', k:'gem',   c:['#f4feff','#b2e2ea','#62909c']},
+ {at:3000, nm:'ダイヤ',   k:'dia',   c:['#eafcff','#79d2ff','#2a74c8']},
+ {at:5000, nm:'マスター', k:'crown', c:['#fff8dd','#ffc24d','#dc5a17']}
+];
+/* 位の絵。段ごとに宝石か王冠を描く */
+function rankSVG(r,size,tag){
+  const id='rg'+r.at+(tag||'');
+  let b='<svg class="rkIc" width="'+size+'" height="'+size+'" viewBox="0 0 24 24">'
+   +'<defs><linearGradient id="'+id+'" x1="0" y1="0" x2="0" y2="1">'
+   +'<stop offset="0" stop-color="'+r.c[0]+'"/>'
+   +'<stop offset=".5" stop-color="'+r.c[1]+'"/>'
+   +'<stop offset="1" stop-color="'+r.c[2]+'"/></linearGradient></defs>';
+  if(r.k==='crown'){
+    b+='<path d="M3 18 L3.6 6 L8.4 10.6 L12 3.4 L15.6 10.6 L20.4 6 L21 18 Z"'
+      +' fill="url(#'+id+')" stroke="rgba(0,0,0,.45)" stroke-width="1.1"'
+      +' stroke-linejoin="round"/>'
+      +'<circle cx="12" cy="14.3" r="1.8" fill="#fff" opacity=".7"/>';
+  } else if(r.k==='dia'){
+    b+='<path d="M12 2.2 L21.2 9.4 L12 21.8 L2.8 9.4 Z" fill="url(#'+id+')"'
+      +' stroke="rgba(0,0,0,.4)" stroke-width="1.1" stroke-linejoin="round"/>'
+      +'<path d="M12 2.2 L15.7 9.4 L12 21.8 L8.3 9.4 Z" fill="#fff" opacity=".34"/>'
+      +'<path d="M2.8 9.4 L21.2 9.4" stroke="rgba(255,255,255,.6)" stroke-width="1"/>';
+  } else {
+    b+='<path d="M12 2.2 L20.6 7.1 L20.6 16.9 L12 21.8 L3.4 16.9 L3.4 7.1 Z"'
+      +' fill="url(#'+id+')" stroke="rgba(0,0,0,.4)" stroke-width="1.1"'
+      +' stroke-linejoin="round"/>'
+      +'<path d="M12 2.2 L20.6 7.1 L12 12 L3.4 7.1 Z" fill="#fff" opacity=".3"/>';
+  }
+  return b+'</svg>';
+}
 /* クリアのランクぶんを果糖に上乗せする */
 const RANK_BONUS={SSS:250,S:100,A:40,B:0,C:0};
 function rankNow(){ let r=RANKS[0]; for(let i=0;i<RANKS.length;i++) if((SV.fruc||0)>=RANKS[i].at) r=RANKS[i]; return r; }
@@ -550,12 +583,18 @@ function bankRun(rank){
 }
 function paintRank(){
   const r=rankNow();
+  $('plRankIc').innerHTML=rankSVG(r,21,'t');
   $('plRankN').textContent=r.nm;
+  $('plRankN').style.color=r.c[1];
+  $('plRankN').style.textShadow='0 0 14px '+r.c[1]+'66';
   $('plRankF').textContent=(SV.fruc||0).toLocaleString('ja-JP');
 }
+/* 結果画面の果糖の行。位の絵も一緒に出す */
 function frucLine(b){
   if(!b) return '—';
-  return '+'+b.add+'（'+b.nm+(b.up?' に昇格！':'')+'）';
+  const r=rankNow();
+  return '+'+b.add+'　'+rankSVG(r,16,'r')
+    +'<span style="color:'+r.c[1]+'">'+r.nm+'</span>'+(b.up?' に昇格！':'');
 }
 
 /* ===================== スキン（きせかえ） ===================== */
@@ -839,7 +878,7 @@ function over(why){
   $('oDist').textContent=(p.z/IMPLANT_Z*TOTAL_CM).toFixed(1)+' cm';
   $('oPass').textContent=g.pass.toLocaleString('ja-JP');
   $('oTime').textContent=fmt(g.t);
-  $('oFruc').textContent=frucLine(bankRun(null));
+  $('oFruc').innerHTML=frucLine(bankRun(null));
   screens('scOver'); sfxLose();
 }
 const SSS_T=124;                   /* 2分4秒。SSS はSの条件＋このタイム以内 */
@@ -871,7 +910,7 @@ function clearGame(){
   if(!best||g.t<best.t) best={t:g.t,rank:rank};
   const bk=bankRun(rank);
   save();
-  $('cFruc').textContent=frucLine(bk);
+  $('cFruc').innerHTML=frucLine(bk);
   $('cBest').textContent=best?fmt(best.t)+'（'+best.rank+'）':'—';
   screens('scClear'); sfxBirth();
   gotAch('impl');
