@@ -676,6 +676,9 @@ function reset(){
   g.cause='';g.acc=0;g.miss=0;g.tired=false;g.saidEnd=false;
   g.flowN=0;g.wallN=0;g.cellN=0;g.mark=0;g.land=0;g.boom=0;g.fertT=0;
   g.lastWall=-9;g.lastHit=-9;g.mashLock=false;
+  /* time がここで 0 に戻るので、time を見ている送信タイマーも戻す。
+     戻し忘れると再戦のあいだ位置を送らず、相手が止まって見える */
+  NET.last=-9;
   ents.length=0; parts.length=0; spawnZ=60;
   dust.length=0;
   for(let i=0;i<190;i++){
@@ -2059,7 +2062,8 @@ window.__seishi=window.__swim={
     p.y=t2.y+Math.sin(PATCH_A)*t2.r*PATCH_RR;
     ents.length=0;
   },
-  info:function(){ return {state:state,z:Math.round(p.z),hp:Math.round(p.hp),st:Math.round(p.st),pass:g.pass}; }
+  info:function(){ return {state:state,z:Math.round(p.z),hp:Math.round(p.hp),st:Math.round(p.st),
+    pass:g.pass,net:NET.on,foe:Math.round(NET.o.z)}; }
 };
 
 })();
