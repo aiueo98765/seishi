@@ -114,6 +114,10 @@
   #plRank .v{font-size:15px;font-weight:800;letter-spacing:.08em;color:#ffe14d}
   #plRank .f{font-size:10px;opacity:.45;letter-spacing:.06em}
   #plRank .f b{font-variant-numeric:tabular-nums;opacity:.9}
+  /* 手元で開いた時だけ出る印。公開したページには出ない */
+  #localTag{position:fixed;left:0;right:0;bottom:5px;z-index:30;display:none;
+    text-align:center;font-size:9px;letter-spacing:.18em;opacity:.4;
+    pointer-events:none;text-shadow:0 1px 3px #000}
   .subBtns{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;justify-content:center}
 
   /* ---- 1v1 ---- */
@@ -363,6 +367,7 @@
     <button class="btn ghost" id="bTitle2">タイトルへ</button>
   </div>
 
+  <div id="localTag">ローカル：全開放</div>
   <div id="mct"></div>
   <div id="cdown"></div>
 
@@ -654,6 +659,19 @@ const ACHS=[
 ];
 const achOf=id=>ACHS.find(a=>a.id===id);
 const achCount=()=>ACHS.reduce((n,a)=>n+(SV.ach[a.id]?1:0),0);
+
+/* ===================== ローカルだけ全開放 =====================
+   手元（localhost / file://）で開いた時だけ、進捗もスキンも位も最初から全部あける。
+   公開したページでは何も起きない。保存先は生成元ごとに別なので、
+   ここで入れた記録が aiueo98765.github.io 側に混ざることもない。 */
+const LOCAL = ['localhost','127.0.0.1','[::1]',''].indexOf(location.hostname)>=0
+  || /\.localhost$/i.test(location.hostname);
+function openAll(){
+  ACHS.forEach(a=>{ SV.ach[a.id]=1; });
+  if((SV.fruc||0)<5000) SV.fruc=5000;
+  save();
+}
+if(LOCAL) openAll();
 function gotAch(id){
   if(SV.ach[id]) return;
   const a=achOf(id); if(!a) return;
@@ -2533,6 +2551,7 @@ resize();
   if(t) $('titleH1').innerHTML=t;
 })();
 reset(); state='title'; screens('scTitle'); buildRibbon(); paintRank();
+if(LOCAL) $('localTag').style.display='block';
 lastT=performance.now()/1000;
 requestAnimationFrame(loop);
 
@@ -2555,6 +2574,11 @@ window.__seishi=window.__swim={
     return g.land;
   },
   release:function(){ g.hold=false; },
+  /* 全開放の出し入れと、位の確認用 */
+  open:function(){ openAll(); paintRank(); return achCount(); },
+  lock:function(){ SV.ach={}; SV.fruc=0; SV.skin='normal'; SKIN=SKINS[0];
+    save(); paintRank(); return '全部しまった（再読み込みで手元はまた開く）'; },
+  fruc:function(v){ SV.fruc=Math.max(0,v|0); save(); paintRank(); return rankNow().nm; },
   /* 顔つき白血球を目の前に湧かせる（動作確認用） */
   face:function(d){
     ents.push({t:'cell',face:1,x:p.x,y:p.y,z:p.z+(d==null?15:d),r:1.4,
