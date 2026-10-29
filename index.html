@@ -859,9 +859,11 @@ function drawEmbryo(x,y,z,sc){
 
 function drawEnt(e){
   const pp=project(e.x,e.y,e.z); if(!pp) return;
-  if(pp.dz<2.0) return;                       /* 通り過ぎた物がカメラ直前で画面を覆うのを防ぐ */
+  /* 通り過ぎた物（自機より手前）はカメラに近いほど巨大化するので、
+     当たり判定を抜けた辺り（自機の少し後ろ）から消していく */
+  if(pp.dz<3.2) return;
   const R=e.r*pp.s,
-        fade=clamp(1-(pp.dz/DRAW)*0.85,0.12,1)*clamp((pp.dz-2.0)/1.7,0,1);
+        fade=clamp(1-(pp.dz/DRAW)*0.85,0.12,1)*clamp((pp.dz-3.2)/2.2,0,1);
   if(R<0.6) return;
   if(e.t==='cell'){
     ctx.globalAlpha=fade;
@@ -1034,9 +1036,9 @@ function drawEndWall(){
 function drawDust(){
   for(let i=0;i<dust.length;i++){
     const d=dust[i], pp=project(d.x,d.y,d.z);
-    if(!pp||pp.dz<1.8) continue;
+    if(!pp||pp.dz<2.4) continue;
     const R=d.r*pp.s; if(R<0.35) continue;
-    const a=d.b*clamp(1-pp.dz/DRAW,0,1)*clamp((pp.dz-1.8)/1.2,0,1)*0.85;
+    const a=d.b*clamp(1-pp.dz/DRAW,0,1)*clamp((pp.dz-2.4)/1.6,0,1)*0.85;
     ctx.fillStyle='rgba(255,230,225,'+a.toFixed(3)+')';
     ctx.beginPath(); ctx.arc(pp.x,pp.y,R,0,TAU); ctx.fill();
   }
