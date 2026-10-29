@@ -94,7 +94,36 @@
   .aRow.got .nm{color:#ffe14d}
   .aRow .ds{font-size:10px;opacity:.55;margin-top:1px}
   #achCount{font-size:11px;opacity:.6;margin-top:12px;letter-spacing:.1em}
-  .subBtns{display:flex;gap:10px;margin-top:14px}
+  .subBtns{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;justify-content:center}
+
+  /* ---- 1v1 ---- */
+  #netBox{width:min(92vw,420px);display:flex;flex-direction:column;align-items:center;gap:12px}
+  .netRow{display:flex;gap:9px;align-items:center;justify-content:center;width:100%}
+  .netOr{font-size:10px;opacity:.4;letter-spacing:.3em}
+  #netCode{flex:1;min-width:0;background:#ffffff0f;border:1px solid #ffffff2e;border-radius:10px;
+    padding:13px 14px;color:#ffe9ee;font-family:inherit;font-size:19px;font-weight:800;
+    letter-spacing:.42em;text-align:center;text-transform:uppercase;outline:none}
+  #netCode:focus{border-color:#ffb0c4;background:#ff9fbb17}
+  #netStat{font-size:11.5px;opacity:.72;letter-spacing:.08em;min-height:18px;text-align:center;
+    line-height:1.7}
+  #netBig{font-size:clamp(34px,11vw,56px);font-weight:900;letter-spacing:.2em;
+    color:#ffe6b0;text-shadow:0 0 26px #ff9d2e88;min-height:0}
+  #netBig.on{margin:2px 0 4px}
+  #cdown{position:absolute;left:0;right:0;top:38%;text-align:center;z-index:8;
+    font-size:clamp(70px,22vw,150px);font-weight:900;color:#fff;
+    text-shadow:0 0 40px #ff3b6b,0 4px 14px #000;opacity:0;pointer-events:none}
+  #vsInfo{position:absolute;left:0;right:0;top:52px;text-align:center;font-size:12px;
+    font-weight:800;letter-spacing:.1em;text-shadow:0 2px 6px #000;opacity:0;
+    transition:opacity .3s}
+  #vsInfo.on{opacity:1}
+  #vsInfo b{font-size:15px}
+  .lead3{color:#9affd0}.bhd{color:#ff9bb5}
+  #rfoe{position:absolute;top:7px;width:2px;height:22px;margin-left:-1px;
+    background:linear-gradient(#cfe9ff,#5aa8ff);box-shadow:0 0 10px #5aa8ff}
+  #rfoe::after{content:'';position:absolute;left:-4px;top:-5px;
+    border:5px solid transparent;border-top-color:#cfe9ff}
+  #scRace h2 svg{height:clamp(40px,12vw,76px);width:auto;display:block;
+    filter:drop-shadow(0 3px 14px #000c)}
 
   .bars{position:absolute;left:14px;bottom:16px;width:min(40vw,210px)}
   .bar{position:relative;height:13px;margin-top:7px;background:#00000066;
@@ -162,6 +191,8 @@
      髭や抜きが潰れて読めなくなるので 400 のまま使う */
   #scClear h2{font-family:var(--hige);font-weight:400;letter-spacing:.16em;
     font-size:clamp(28px,7.5vw,50px)}
+  #scClear h2 svg{height:clamp(32px,9vw,62px);width:auto;display:block;
+    filter:drop-shadow(0 3px 12px #000a)}
   /* S/A/B/C は大髭を使わない（本人の指定） */
   #rank{font-size:clamp(54px,16vw,96px);font-weight:900;line-height:1;margin:6px 0 2px;
     background:linear-gradient(#fffbe8,#ffd166 55%,#ff8a3d);-webkit-background-clip:text;
@@ -197,6 +228,7 @@
         <div id="rtrack"><i id="rdone"></i></div>
         <div id="rhere"></div>
       </div>
+      <div id="vsInfo"></div>
     </div>
     <div class="bars">
       <div class="bar"><i id="hpF"></i><b>たいりょく</b></div>
@@ -242,15 +274,19 @@
     </div>
     <button class="btn" id="bStart">泳ぎ出す</button>
     <div class="subBtns">
+      <button class="btn ghost" id="bVs" style="margin-top:0">1v1 で競う</button>
       <button class="btn ghost" id="bSkins" style="margin-top:0">きせかえ</button>
       <button class="btn ghost" id="bAchs" style="margin-top:0">進捗</button>
     </div>
-    <p class="note">壁への激突・白血球・酸はダメージ。果糖でスタミナ回復。<br>カメラは常に真後ろ（視点移動なし）。</p>
+    <p class="note">壁への激突・白血球・酸はダメージ。果糖でスタミナ回復。<br>
+      カメラは常に真後ろ（視点移動なし）。<br>
+      1v1 は4文字の合言葉を相手に伝えるだけ。障害物は両者おなじ配置になる。</p>
   </div>
 
   <div class="screen" id="scOver">
     <div class="tag">GAME OVER</div>
     <h2 id="overTitle">力尽きた</h2>
+
     <p class="lead" id="overMsg"></p>
     <div class="res">
       <i>とうたつ</i><b id="oDist">0.0 cm</b>
@@ -263,7 +299,7 @@
 
   <div class="screen" id="scClear">
     <div class="tag">IMPLANTATION COMPLETE</div>
-    <h2>着床成功</h2>
+    <h2 id="clearH2">着床成功</h2>
     <div id="rank">S</div>
     <p class="lead" id="clearMsg">ここから、ぜんぶが始まる。</p>
     <div class="res">
@@ -278,6 +314,35 @@
   </div>
 
   <div id="mct"></div>
+  <div id="cdown"></div>
+
+  <div class="panel" id="pNet">
+    <h3>1v1 で競う</h3>
+    <div class="psub">どちらが先に着床できるか。障害物は同じ配置になる</div>
+    <div id="netBox">
+      <div id="netBig"></div>
+      <div class="netRow"><button class="btn" id="bMake" style="margin-top:0">部屋をつくる</button></div>
+      <div class="netOr">または</div>
+      <div class="netRow">
+        <input id="netCode" maxlength="4" placeholder="CODE" autocomplete="off" spellcheck="false">
+        <button class="btn ghost" id="bJoin" style="margin-top:0">入る</button>
+      </div>
+      <div id="netStat">　</div>
+    </div>
+    <button class="btn ghost" id="bNetClose">とじる</button>
+  </div>
+
+  <div class="screen" id="scRace">
+    <div class="tag" id="raceTag">RACE RESULT</div>
+    <h2 id="raceH2">勝利</h2>
+    <p class="lead" id="raceMsg"></p>
+    <div class="res">
+      <i>あなた</i><b id="rMe">—</b>
+      <i>あいて</i><b id="rYou">—</b>
+    </div>
+    <button class="btn" id="bRaceAgain">もう一度やる</button>
+    <button class="btn ghost" id="bRaceTitle">やめる</button>
+  </div>
 
   <div class="panel" id="pSkin">
     <h3>きせかえ</h3>
@@ -303,6 +368,7 @@
   </div>
 </div>
 
+<script src="hige.js"></script>
 <script>
 (function(){
 'use strict';
@@ -618,16 +684,22 @@ function reset(){
   }
 }
 function screens(on){
-  ['scTitle','scOver','scClear','scPause'].forEach(id=>$(id).classList.toggle('on',id===on));
+  ['scTitle','scOver','scClear','scPause','scRace'].forEach(id=>$(id).classList.toggle('on',id===on));
   $('hud').classList.toggle('on', on===null);
   $('pads').classList.toggle('on', on===null);
 }
 function start(){
+  netLeave(); RNG=Math.random; NET.on=false; NET.over=true;
   actx(); reset(); screens(null); buildRibbon();
   toast('泳げ','3億分の1の旅がはじまる',2.0);
   setTimeout(()=>gotAch('start'),600);
 }
 function over(why){
+  if(NET.on && !NET.over){
+    try{ NET.act.st.send({z:p.z,x:p.x,y:p.y,ph:p.phase,hp:0,d:1}); }catch(e){}
+    raceEnd('lose', why==='rival' ? '卵膜を開けられなかった' : '力尽きた');
+    return;
+  }
   state='over'; g.cause=why||'';
   $('overTitle').textContent = why==='rival' ? 'ライバルに先を越された' : '力尽きた';
   $('overMsg').textContent = why==='rival'
@@ -640,6 +712,13 @@ function over(why){
   screens('scOver'); sfxLose();
 }
 function clearGame(){
+  if(NET.on){
+    gotAch('impl');
+    if(g.hits===0) setTimeout(()=>gotAch('perfect'),900);
+    raceEnd(NET.result||'win',
+      NET.result==='lose' ? 'わずかに届かなかった' : '先に着いた');
+    return;
+  }
   state='clear';
   const acc=g.acc;
   const rank = acc<.3&&p.hp>60 ? 'S' : acc<.5 ? 'A' : acc<.8 ? 'B' : 'C';
@@ -662,38 +741,72 @@ function clearGame(){
 
 /* ===================== 着床のフィナーレ ===================== */
 const HIGE="'大髭115','大髭113','白舟大髭','Dela Gothic One',sans-serif";
-/* 本物の「大髭」が入っている環境か判定する。入っていれば字自体に髭も虫食いもあるので、
-   こちらで足す荒らしはごく控えめにする（入っていない人は Dela Gothic One に足す） */
-let HAS_HIGE=false;
-(function(){
-  try{
-    const sig=f=>{
-      const c=document.createElement('canvas'); c.width=64; c.height=64;
-      const x=c.getContext('2d');
-      x.font='400 48px '+f; x.textBaseline='middle'; x.textAlign='center';
-      x.fillText('着',32,32);
-      const d=x.getImageData(0,0,64,64).data; let h=0;
-      for(let i=3;i<d.length;i+=4) h=(h*31+d[i])|0;
-      return h;
-    };
-    HAS_HIGE = sig('"大髭115","大髭113","白舟大髭"') !== sig('sans-serif');
-  }catch(e){}
-})();
+/* hige.js に「大髭113」の字を輪郭（パス）で持たせてある。フォント本体は配らない。
+   これがあれば、大髭が入っていない端末でも同じ字が出る。 */
+const HP=window.HIGE_PATHS||null;
+const HAS_HIGE=!!HP;
+function higeText(txt,fs){
+  if(!HP) return null;
+  const s=fs/HP.upem, p=new Path2D();
+  let x=0,x0=1e9,y0=1e9,x1=-1e9,y1=-1e9,n=0;
+  for(const ch of txt){
+    const g=HP.g[ch];
+    if(!g){ x+=fs; continue; }
+    p.addPath(new Path2D(g.d), new DOMMatrix([s,0,0,-s,x,0]));
+    x0=Math.min(x0,x+g.b[0]*s); x1=Math.max(x1,x+g.b[2]*s);
+    y0=Math.min(y0,-g.b[3]*s);  y1=Math.max(y1,-g.b[1]*s);
+    x+=g.w*s; n++;
+  }
+  return n? {path:p,x0:x0,y0:y0,w:x1-x0,h:y1-y0} : null;
+}
+/* HTML 側（着床成功の見出しなど）用。輪郭をそのまま SVG にする */
+function higeSVG(txt,gid){
+  if(!HP) return null;
+  let x=0,x0=1e9,y0=1e9,x1=-1e9,y1=-1e9,parts=[];
+  for(const ch of txt){
+    const g=HP.g[ch]; if(!g){ x+=HP.upem; continue; }
+    parts.push('<path transform="translate('+x+' 0)" d="'+g.d+'"/>');
+    x0=Math.min(x0,x+g.b[0]); x1=Math.max(x1,x+g.b[2]);
+    y0=Math.min(y0,g.b[1]);   y1=Math.max(y1,g.b[3]);
+    x+=g.w;
+  }
+  if(!parts.length) return null;
+  return '<svg viewBox="'+x0+' '+(-y1)+' '+(x1-x0)+' '+(y1-y0)+'" '+
+    'xmlns="http://www.w3.org/2000/svg" aria-label="'+txt+'">'+
+    '<defs><linearGradient id="'+gid+'" x1="0" y1="0" x2="0" y2="1">'+
+    '<stop offset="0" stop-color="#fffdf4"/><stop offset=".45" stop-color="#ffdf8e"/>'+
+    '<stop offset=".8" stop-color="#ff9a46"/><stop offset="1" stop-color="#e8502f"/>'+
+    '</linearGradient></defs>'+
+    '<g fill="url(#'+gid+')" transform="scale(1,-1)">'+parts.join('')+'</g></svg>';
+}
 let _imp={};
 /* 「大髭」が無い環境でも近い質感になるよう、太い字に虫食い・かすれ・墨はねを足す */
 function impactText(txt){
   if(_imp[txt]) return _imp[txt];
-  const fs=360, c=document.createElement('canvas');
-  c.width=Math.ceil(fs*txt.length*1.22+fs*0.8);
-  c.height=Math.ceil(fs*1.75);
+  const fs=360, ht=higeText(txt,fs), pad=fs*0.42;
+  const c=document.createElement('canvas');
+  c.width =Math.ceil(ht? ht.w+pad*2 : fs*txt.length*1.22+fs*0.8);
+  c.height=Math.ceil(ht? ht.h+pad*2 : fs*1.75);
   const x=c.getContext('2d'), cx=c.width/2, cy=c.height/2;
-  x.font=(HAS_HIGE?'400 ':'900 ')+fs+'px '+HIGE;   /* 大髭に合成ボールドをかけない */
-  x.textAlign='center'; x.textBaseline='middle';
-  const g2=x.createLinearGradient(0,cy-fs*.62,0,cy+fs*.62);
-  g2.addColorStop(0,'#fffdf4'); g2.addColorStop(.36,'#ffdf8e');
-  g2.addColorStop(.72,'#ff8f3a'); g2.addColorStop(1,'#d8302a');
-  x.fillStyle=g2; x.fillText(txt,cx,cy);
-  const NH=HAS_HIGE?12:46, NL=HAS_HIGE?2:7, NS=HAS_HIGE?18:34;
+  /* グラデーションは「塗る時の座標系」で効くので、translate のあとに作る */
+  const grad=(a,b)=>{
+    const g2=x.createLinearGradient(0,a,0,b);
+    g2.addColorStop(0,'#fffbe8'); g2.addColorStop(.30,'#ffd978');
+    g2.addColorStop(.68,'#ff8a35'); g2.addColorStop(1,'#d02a28');
+    return g2;
+  };
+  if(ht){
+    x.save(); x.translate(pad-ht.x0,pad-ht.y0);
+    x.fillStyle=grad(ht.y0,ht.y0+ht.h);
+    x.fill(ht.path);
+    x.restore();
+  }else{
+    x.fillStyle=grad(c.height*0.18,c.height*0.82);
+    x.font='900 '+fs+'px '+HIGE;
+    x.textAlign='center'; x.textBaseline='middle';
+    x.fillText(txt,cx,cy);
+  }
+  const NH=ht?12:46, NL=ht?2:7, NS=ht?18:34;
   x.globalCompositeOperation='destination-out';
   for(let i=0;i<NH;i++){
     const h1=hash(i,11),h2=hash(i,29),h3=hash(i,47);
@@ -726,6 +839,11 @@ function impactText(txt){
 if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ _imp={}; });
 
 function startLanding(px,py){
+  if(NET.on && !NET.myFin){
+    NET.myFin=g.t;
+    try{ NET.act.fin.send({t:g.t}); }catch(e){}
+    NET.result = (NET.o.fin && NET.o.fin<g.t) ? 'lose' : 'win';
+  }
   state='land'; g.land=0; g.boom=0; g.px=px; g.py=py; shake=3; sfxLand();
   $('qte').classList.remove('on');
   $('hud').classList.remove('on');          /* 演出の邪魔になるHUDは引っ込める */
@@ -816,14 +934,188 @@ $('bTitle1').onclick=$('bTitle2').onclick=()=>{state='title';screens('scTitle');
 $('bResume').onclick=togglePause;
 $('bGiveUp').onclick=()=>{state='title';screens('scTitle');};
 
+/* ===================== 1v1 レース ===================== */
+function mulberry32(a){
+  return function(){
+    a|=0; a=a+0x6D2B79F5|0;
+    let t=Math.imul(a^a>>>15,1|a);
+    t=t+Math.imul(t^t>>>7,61|t)^t;
+    return ((t^t>>>14)>>>0)/4294967296;
+  };
+}
+let RNG=Math.random;                 /* 対戦中は種つきに差し替えて、同じ障害物にする */
+
+const NET={
+  on:false, room:null, role:null, code:'', peer:null, seed:0, act:{},
+  o:{z:0,x:0,y:0,ph:0,hp:100,drill:0,skin:'normal',fin:0},
+  last:0, over:true, myFin:0, result:'', ready:false, oready:false
+};
+const CODE_A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const code4=()=>{ let s=''; for(let i=0;i<4;i++) s+=CODE_A[Math.floor(Math.random()*CODE_A.length)]; return s; };
+function seedOf(c){ let h=2166136261;
+  for(let i=0;i<c.length;i++){ h^=c.charCodeAt(i); h=Math.imul(h,16777619); }
+  return h>>>0; }
+
+/* 相手さがしに使う公開リレー（やりとり自体は WebRTC で直接） */
+const NOSTR_RELAYS=['wss://relay.damus.io','wss://nos.lol','wss://relay.primal.net',
+  'wss://relay.snort.social','wss://offchain.pub','wss://nostr.mom'];
+let _lib=null;
+async function netLib(){ if(!_lib) _lib=await import('./vendor/trystero.js'); return _lib; }
+const netStat=t=>{ $('netStat').innerHTML=t; };
+
+function netLeave(){
+  if(NET.room){ try{ NET.room.leave(); }catch(e){} }
+  NET.room=null; NET.peer=null; NET.act={}; NET.on=false; NET.over=true;
+  NET.ready=false; NET.oready=false;
+  $('vsInfo').classList.remove('on');
+}
+
+async function netOpen(code,role){
+  netLeave();
+  netStat('リレーにつないでいます…');
+  let lib;
+  try{ lib=await netLib(); }
+  catch(e){ netStat('通信部品を読み込めませんでした。<br>file:// では動きません'); return; }
+  NET.code=code; NET.role=role; NET.seed=seedOf(code); NET.over=true;
+  let room;
+  try{
+    room=lib.joinNostr({
+      appId:'seishi-race-v1',
+      relayConfig:{urls:NOSTR_RELAYS,redundancy:4,warnOnRelayFailure:false},
+      rtcConfig:{iceServers:[{urls:['stun:stun.l.google.com:19302',
+                                    'stun:stun1.l.google.com:19302']}]}
+    },'r-'+code,{onJoinError:()=>netStat('部屋に入れませんでした')});
+  }catch(e){ netStat('リレーにつながりませんでした'); return; }
+  NET.room=room;
+
+  const hi=room.makeAction('hi'), go=room.makeAction('go'),
+        st=room.makeAction('st'), fin=room.makeAction('fin'), rm=room.makeAction('rm');
+  NET.act={hi:hi,go:go,st:st,fin:fin,rm:rm};
+
+  hi.onMessage=d=>{ if(d&&d.skin) NET.o.skin=d.skin; };
+  go.onMessage=d=>{ if(d&&d.seed!=null){ NET.seed=d.seed>>>0; beginCountdown(); } };
+  st.onMessage=d=>{
+    if(!d) return;
+    NET.o.z=d.z||0; NET.o.x=d.x||0; NET.o.y=d.y||0; NET.o.ph=d.ph||0;
+    NET.o.hp=(d.hp==null?100:d.hp); NET.o.drill=d.dr||0;
+    if(d.d && NET.on && !NET.over) raceEnd('win','相手が力尽きた');
+  };
+  fin.onMessage=d=>{
+    NET.o.fin=(d&&d.t)||0.001;
+    if(NET.on && !NET.over && !NET.myFin) raceEnd('lose','相手が先に着床した');
+  };
+  rm.onMessage=()=>{ NET.oready=true; tryRematch(); };
+
+  /* この版の trystero は、関数を呼ぶのではなくプロパティに入れる形 */
+  room.onPeerJoin=id=>{
+    NET.peer=id;
+    try{ hi.send({skin:SKIN.id}); }catch(e){}
+    netStat('つながりました。はじめます');
+    if(NET.role==='host') setTimeout(()=>{
+      try{ go.send({seed:NET.seed}); }catch(e){}
+      beginCountdown();
+    },800);
+  };
+  room.onPeerLeave=()=>{
+    NET.peer=null;
+    if(NET.on && !NET.over) raceEnd('bye','相手との通信が切れた');
+    else netStat('相手が出ていきました');
+  };
+
+  netStat(role==='host'
+    ? 'このコードを相手に伝えてください<br>待っています…'
+    : '部屋をさがしています…<br>つながるまで10秒ほどかかることがあります');
+}
+
+function beginCountdown(){
+  closePanel('pNet');
+  NET.on=true; NET.over=false; NET.myFin=0; NET.result='';
+  NET.ready=false; NET.oready=false;
+  NET.o.fin=0; NET.o.z=0; NET.o.drill=0; NET.o.hp=100;
+  actx(); RNG=mulberry32(NET.seed);
+  reset(); buildRibbon(); screens(null);
+  state='cdown';
+  $('vsInfo').classList.add('on');
+  const el=$('cdown');
+  let n=3;
+  const tick=()=>{
+    if(state!=='cdown') return;
+    if(n>0){
+      el.textContent=n; tone(660,.14,'square',.12);
+      el.animate([{transform:'scale(1.6)',opacity:0},{transform:'scale(1)',opacity:1},
+                  {transform:'scale(.85)',opacity:0}],{duration:880});
+      n--; setTimeout(tick,880);
+    }else{
+      el.textContent='GO'; tone(1320,.3,'square',.15);
+      el.animate([{transform:'scale(.6)',opacity:0},{transform:'scale(1.25)',opacity:1},
+                  {transform:'scale(1.7)',opacity:0}],{duration:720});
+      state='swim'; lastT=performance.now()/1000;
+      toast('よーいドン','先に着床したほうが勝ち',1.8);
+      setTimeout(()=>gotAch('start'),600);
+    }
+  };
+  tick();
+}
+
+function raceEnd(kind,msg){
+  if(NET.over && state==='race') return;
+  NET.over=true; NET.on=false; state='race';
+  $('vsInfo').classList.remove('on');
+  $('hud').classList.remove('on');
+  const w=(kind==='win'), txt= kind==='bye' ? '引分' : (w?'勝利':'敗北');
+  const sv=higeSVG(txt,'gR'+kind);
+  $('raceH2').innerHTML=sv||txt;
+  $('raceTag').textContent= kind==='bye' ? 'DISCONNECTED' : 'RACE RESULT';
+  $('raceMsg').textContent=msg||'';
+  $('rMe').textContent  = NET.myFin  ? fmt(NET.myFin)  : '—';
+  $('rYou').textContent = NET.o.fin  ? fmt(NET.o.fin)  : '—';
+  screens('scRace');
+  if(w) sfxWin(); else sfxLose();
+}
+function tryRematch(){
+  if(NET.role!=='host'||!NET.peer) return;
+  if(NET.ready&&NET.oready){
+    NET.seed=(Math.imul(NET.seed,1664525)+1013904223)>>>0;
+    try{ NET.act.go.send({seed:NET.seed}); }catch(e){}
+    beginCountdown();
+  }
+}
+$('bVs').onclick=()=>{
+  $('netBig').textContent=''; $('netBig').classList.remove('on');
+  netStat('コードを作るか、相手のコードを入れてください');
+  openPanel('pNet');
+};
+$('bNetClose').onclick=()=>{ netLeave(); closePanel('pNet'); };
+$('bMake').onclick=()=>{
+  const c=code4();
+  $('netBig').textContent=c; $('netBig').classList.add('on');
+  $('netCode').value=''; netOpen(c,'host');
+};
+$('bJoin').onclick=()=>{
+  const c=($('netCode').value||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,4);
+  if(c.length<4){ netStat('コードは4文字です'); return; }
+  $('netBig').textContent=c; $('netBig').classList.add('on');
+  netOpen(c,'guest');
+};
+$('bRaceAgain').onclick=()=>{
+  if(!NET.room||!NET.peer){ netLeave(); state='title'; screens('scTitle'); return; }
+  NET.ready=true;
+  try{ NET.act.rm.send(1); }catch(e){}
+  $('raceMsg').textContent='相手を待っています…';
+  tryRematch();
+};
+$('bRaceTitle').onclick=()=>{ netLeave(); state='title'; screens('scTitle'); };
+
 /* ===================== 流れる場所バー ===================== */
 const PPU=1.15;
-let rdoneEl=null;
+let rdoneEl=null, rfoeEl=null;
 function buildRibbon(){
   const tr=$('rtrack');
   tr.innerHTML='';
   tr.style.width=(IMPLANT_Z*PPU+140)+'px';
   rdoneEl=document.createElement('i'); rdoneEl.id='rdone'; tr.appendChild(rdoneEl);
+  rfoeEl=document.createElement('i'); rfoeEl.id='rfoe';
+  rfoeEl.style.display='none'; tr.appendChild(rfoeEl);
   ALL.forEach((s,i)=>{
     const z0=i?ALL[i-1].end:0;
     const d=document.createElement('div'); d.className='seg';
@@ -848,6 +1140,11 @@ function buildRibbon(){
 function ribbon(){
   $('rtrack').style.transform='translateX('+(W*0.5-p.z*PPU).toFixed(1)+'px)';
   if(rdoneEl) rdoneEl.style.width=Math.max(0,p.z*PPU).toFixed(1)+'px';
+  if(rfoeEl){
+    if(NET.on){ rfoeEl.style.display='block';
+      rfoeEl.style.left=(NET.o.z*PPU).toFixed(1)+'px'; }
+    else rfoeEl.style.display='none';
+  }
 }
 
 /* ===================== きせかえ／進捗の画面 ===================== */
@@ -924,17 +1221,19 @@ $('bSkinClose').onclick=()=>closePanel('pSkin');
 $('bAchClose').onclick=()=>closePanel('pAch');
 
 /* ===================== 出現 ===================== */
+/* 対戦では両者で同じ配置にしたいので、ここだけ種つきの乱数（RNG）を使う */
+const nrnd=(a,b)=>a+RNG()*(b-a);
 function spawnOne(t,z,tb,extra){
-  const a=Math.random()*TAU;
+  const a=RNG()*TAU;
   let r=0.5;
-  if(t==='cell') r=rnd(1.0,1.7);
-  else if(t==='clot') r=rnd(.75,1.5);
-  else if(t==='acid') r=rnd(.34,.5);
+  if(t==='cell') r=nrnd(1.0,1.7);
+  else if(t==='clot') r=nrnd(.75,1.5);
+  else if(t==='acid') r=nrnd(.34,.5);
   else if(t==='rival') r=.4;
   else if(t==='food') r=.42;
-  const rr = t==='flow' ? 0 : Math.sqrt(Math.random())*Math.max(0,tb.r-r-0.25);
+  const rr = t==='flow' ? 0 : Math.sqrt(RNG())*Math.max(0,tb.r-r-0.25);
   const e={t:t,x:tb.x+Math.cos(a)*rr,y:tb.y+Math.sin(a)*rr,z:z,r:r,
-    vx:0,vy:0,seed:Math.random()*100,ph:Math.random()*TAU,done:false,passed:false};
+    vx:0,vy:0,seed:RNG()*100,ph:RNG()*TAU,done:false,passed:false};
   if(t==='flow'){ e.x=tb.x;e.y=tb.y;e.r=tb.r*0.52; }
   if(extra) Object.assign(e,extra);
   ents.push(e);
@@ -945,21 +1244,28 @@ function spawnStep(){
     if(z<56) continue;
     if(Math.abs(z-EGG_Z)<22) continue;
     if(z>IMPLANT_Z-26) continue;
-    if(ents.length>95) continue;
+    if(ents.length>160) continue;            /* 乱数の進み方を揃えるため、まず起きない値に */
     const s=paramsAt(z), d=s.dens, tb=tube(z);
     const ramp=0.68+0.45*clamp(z/2400,0,1);
-    if(Math.random()<d.acid*0.20*ramp) spawnOne('acid',z,tb);
-    if(Math.random()<d.clot*0.19*ramp) spawnOne('clot',z,tb);
-    if(Math.random()<d.cell*0.15*ramp) spawnOne('cell',z,tb);
-    if(Math.random()<d.rival*0.21)     spawnOne('rival',z,tb);
-    if(Math.random()<d.food*0.16)      spawnOne('food',z,tb);
-    if(Math.random()<d.flow*0.10)      spawnOne('flow',z,tb);
+    if(RNG()<d.acid*0.20*ramp) spawnOne('acid',z,tb);
+    if(RNG()<d.clot*0.19*ramp) spawnOne('clot',z,tb);
+    if(RNG()<d.cell*0.15*ramp) spawnOne('cell',z,tb);
+    if(RNG()<d.rival*0.21)     spawnOne('rival',z,tb);
+    if(RNG()<d.food*0.16)      spawnOne('food',z,tb);
+    if(RNG()<d.flow*0.10)      spawnOne('flow',z,tb);
   }
 }
 
 /* ===================== 更新 ===================== */
 function update(dt){
   time+=dt; g.t+=dt;
+
+  /* --- 対戦：自分の位置を送る（12回/秒） --- */
+  if(NET.on && NET.act.st && time-NET.last>0.08){
+    NET.last=time;
+    try{ NET.act.st.send({z:+p.z.toFixed(2),x:+p.x.toFixed(2),y:+p.y.toFixed(2),
+      ph:+p.phase.toFixed(2),hp:Math.round(p.hp),dr:Math.round(g.drill),d:0}); }catch(e){}
+  }
 
   /* --- 心音 --- */
   A.hb-=dt;
@@ -1067,7 +1373,8 @@ function update(dt){
   /* --- 受精QTE --- */
   if(state==='egg'){
     g.eggT-=dt;
-    g.rival=Math.min(100,g.rival+dt*7.1);
+    /* 対戦中は「ライバルの進捗」が相手の実際の掘り具合になる */
+    g.rival = NET.on ? NET.o.drill : Math.min(100,g.rival+dt*7.1);
     p.spd=lerp(p.spd,1.5,1-Math.pow(0.1,dt));
     p.z+=p.spd*dt*0.35;
     p.phase+=dt*(9+g.drill*0.2);
@@ -1083,7 +1390,7 @@ function update(dt){
       toast('受精','ここから、きみは「胚」になる',2.6);
       flashWhite=1; sfxWin(); gotAch('fert'); g.fertT=time;
       for(let i=0;i<5;i++) setTimeout(()=>burst(W*0.5,H*0.45,26,[255,245,210],1.6),i*70);
-    } else if(g.rival>=100 || g.eggT<=0){
+    } else if((!NET.on && g.rival>=100) || g.eggT<=0){
       over('rival');
     }
   }
@@ -1203,6 +1510,12 @@ function hud(){
   if($('stName').textContent!==sp.name){ $('stName').textContent=sp.name; $('stSub').textContent=sp.sub; }
   $('iDist').textContent=(pg*TOTAL_CM).toFixed(1);
   $('iPass').textContent=g.pass.toLocaleString('ja-JP');
+  if(NET.on){
+    const d=(p.z-NET.o.z)/IMPLANT_Z*TOTAL_CM;
+    $('vsInfo').innerHTML = d>=0
+      ? '<span class="lead3">リード <b>+'+d.toFixed(1)+'</b>cm</span>'
+      : '<span class="bhd">ビハインド <b>'+d.toFixed(1)+'</b>cm</span>';
+  }
   const left=Math.max(1,Math.round(3e8*Math.pow(1-pg,3.2)));
   $('iRival').textContent = left>=1e8 ? (left/1e8).toFixed(1)+'億'
     : left>=1e4 ? Math.round(left/1e4).toLocaleString('ja-JP')+'万'
@@ -1461,6 +1774,11 @@ function drawEnt(e){
     ctx.strokeStyle='rgba(235,255,180,.9)'; ctx.lineWidth=Math.max(1,R*.16);
     ctx.beginPath(); ctx.arc(pp.x,pp.y,R,0,TAU); ctx.stroke();
     ctx.globalAlpha=1;
+  } else if(e.t==='ghost'){
+    const s=skinOf(NET.o.skin);
+    ctx.globalAlpha=fade*0.66;
+    drawSperm(e.x,e.y,e.z,e.ph,0.38,1,s,[110,185,255]);
+    ctx.globalAlpha=1;
   } else if(e.t==='rival'){
     ctx.globalAlpha=fade*0.92;
     drawSperm(e.x,e.y,e.z,e.ph*5+e.seed,0.22,0.78,RIVAL_SKIN,null);
@@ -1622,6 +1940,8 @@ function render(){
   /* 奥→手前 */
   const vis=[];
   for(let i=0;i<ents.length;i++) if(ents[i].z>camZ-2) vis.push(ents[i]);
+  if(NET.on && NET.o.z>camZ-2)
+    vis.push({t:'ghost',x:NET.o.x,y:NET.o.y,z:NET.o.z,r:0.5,ph:NET.o.ph,seed:0});
   vis.sort((a,b)=>b.z-a.z);
   let drawn=false;
   for(let i=0;i<vis.length;i++){
@@ -1709,7 +2029,7 @@ function loop(now){
   dt=Math.min(dt,1/18);
 
   if(state==='pause'){ render(); requestAnimationFrame(loop); return; }
-  if(state==='title'||state==='over'||state==='clear'){
+  if(state==='title'||state==='over'||state==='clear'||state==='race'||state==='cdown'){
     time+=dt;
     if(state==='title') titleDrift(dt);
     render();
@@ -1723,6 +2043,7 @@ function loop(now){
 
 /* ===================== 起動 ===================== */
 resize();
+(function(){ const m=higeSVG('着床成功','gClear'); if(m) $('clearH2').innerHTML=m; })();
 reset(); state='title'; screens('scTitle'); buildRibbon();
 lastT=performance.now()/1000;
 requestAnimationFrame(loop);
