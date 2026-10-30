@@ -114,6 +114,26 @@
   #plRank .v{font-size:15px;font-weight:800;letter-spacing:.08em;color:#ffe14d}
   #plRank .f{font-size:10px;opacity:.45;letter-spacing:.06em}
   #plRank .f b{font-variant-numeric:tabular-nums;opacity:.9}
+  /* ---- RTA ---- */
+  #modeRow{display:flex;align-items:center;gap:10px;margin:16px auto 2px;
+    width:max-content;max-width:94vw}
+  #modeRow label{font-size:10px;letter-spacing:.2em;opacity:.5}
+  #selMode{background:#ffffff10;border:1px solid #ffffff2b;border-radius:9px;
+    padding:7px 11px;color:#ffe9ee;font-family:inherit;font-size:11.5px;
+    letter-spacing:.06em;outline:none;cursor:pointer;pointer-events:auto;
+    max-width:min(70vw,290px)}
+  #selMode:focus{border-color:#ffb0c4}
+  #selMode option{background:#180810;color:#ffe9ee}
+  #rtaT{position:absolute;left:0;right:0;top:86px;z-index:4;text-align:center;
+    display:none;pointer-events:none;font-variant-numeric:tabular-nums;
+    font-size:clamp(34px,9.5vw,62px);font-weight:900;letter-spacing:.01em;
+    line-height:1;color:#fffdf4;
+    text-shadow:0 0 26px #000,0 0 10px #000,0 4px 12px #000}
+  #rtaT.on{display:block}
+  #wrap.rta #toast{top:46%}
+  #wrap.rta #sub2{top:calc(46% + 42px)}
+  .mcT.split .t1{color:#9affd0;font-variant-numeric:tabular-nums;font-size:11px}
+  .mcT.split{box-shadow:inset 0 0 0 2px #2f6b58,0 8px 22px #000a}
   /* ---- ストーリー ---- */
   #stCard{position:absolute;inset:0;z-index:12;display:none;flex-direction:column;
     align-items:center;justify-content:center;padding:28px;text-align:center;
@@ -124,9 +144,11 @@
   #stTtl{font-size:clamp(24px,7.4vw,42px);font-weight:900;letter-spacing:.24em;
     color:#fff3e4;text-shadow:0 0 34px #000,0 2px 12px #000}
   /* 縦書きは「段の高さ」を決めておかないと、途中で次の段へ折り返す */
+  /* 縦書きの中では flex の row が「上から下」になる。
+     題と本文を横に並べたいので column を使う */
   #stInner{writing-mode:vertical-rl;text-orientation:upright;
-    display:flex;flex-direction:row;align-items:flex-start;
-    flex:0 0 auto;height:min(66vh,470px);gap:.5em}
+    display:flex;flex-direction:column;align-items:flex-start;
+    flex:0 0 auto;height:min(66vh,470px);gap:.6em}
   #stLines span{display:block;font-size:clamp(12px,3.4vw,15px);line-height:2.6;
     letter-spacing:.2em;opacity:0;animation:stLn .9s forwards}
   #stLines span:nth-child(1){animation-delay:.3s}
@@ -426,6 +448,13 @@
       <b>P / ESC</b><span>一時停止　　<b style="padding:1px 6px">M</b> 音</span>
     </div>
     <button class="btn" id="bStart">泳ぎ出す</button>
+    <div id="modeRow">
+      <label for="selMode">モード</label>
+      <select id="selMode">
+        <option value="normal">ふつう</option>
+        <option value="rta">RTA（タイム表示・進捗を毎回通知）</option>
+      </select>
+    </div>
     <div class="subBtns">
       <button class="btn ghost" id="bStory" style="margin-top:0">ストーリー</button>
       <button class="btn ghost" id="bGacha" style="margin-top:0">ガチャ</button>
@@ -471,6 +500,7 @@
     <button class="btn ghost" id="bTitle2">タイトルへ</button>
   </div>
 
+  <div id="rtaT">0:00.00</div>
   <div id="stTop">
     <div id="stChName"></div>
     <div id="stTrack"><i id="stBar"></i></div>
@@ -694,11 +724,12 @@ const g={t:0,pass:0,food:0,hits:0,drill:0,rival:0,eggT:0,cells:1,
 let ents=[], dust=[], parts=[], spawnZ=0;
 /* ===================== セーブ（進捗・スキン・ベスト） ===================== */
 const SV={ach:{},skin:'normal',best:null,fruc:0,story:0,
-  coin:0,gs:{},pity:0,pulls:0};
+  coin:0,gs:{},pity:0,pulls:0,rta:0};
 try{
   const o=JSON.parse(localStorage.getItem('seishi_save')||'null');
   if(o){ SV.ach=o.ach||{}; SV.skin=o.skin||'normal'; SV.best=o.best||null; SV.fruc=o.fruc||0; SV.story=o.story||0;
-    SV.coin=o.coin||0; SV.gs=o.gs||{}; SV.pity=o.pity||0; SV.pulls=o.pulls||0; }
+    SV.coin=o.coin||0; SV.gs=o.gs||{}; SV.pity=o.pity||0; SV.pulls=o.pulls||0;
+    SV.rta=o.rta||0; }
   if(!SV.best) SV.best=JSON.parse(localStorage.getItem('seishi_best')||localStorage.getItem('swim_best')||'null');
 }catch(e){}
 let best=SV.best;
@@ -1338,30 +1369,36 @@ function openAll(){
 }
 if(LOCAL) openAll();
 function gotAch(id){
-  if(SV.ach[id]) return;
   const a=achOf(id); if(!a) return;
-  SV.ach[id]=1; save(); mcToast(a);
+  if(SV.ach[id]){
+    /* RTA中は、もう持っている進捗もその場で知らせる（区切りとして要る）。
+       判定は毎コマ走るので、1回の旅につき1度だけに絞る */
+    if(SV.rta && !g.rtaSeen[id]){ g.rtaSeen[id]=1; mcToast(a,rtaNow()); }
+    return;
+  }
+  if(SV.rta) g.rtaSeen[id]=1;
+  SV.ach[id]=1; save(); mcToast(a,SV.rta?rtaNow():null);
   const uq=SKINS.filter(s=>s.need===id);
   if(uq.length) setTimeout(()=>toast('スキン解放','「'+uq[0].nm+'」がきせかえに増えた',2.4),1000);
   if(id!=='ach12'&&achCount()>=12) setTimeout(()=>gotAch('ach12'),1500);
 }
 /* 一度に出すのは3つまで。あふれた分は順番待ち */
 const mcQ=[]; let mcShown=0;
-function mcToast(a){ mcQ.push(a); mcPump(); }
+function mcToast(a,split){ mcQ.push({a:a,sp:split}); mcPump(); }
 function mcPump(){
   while(mcShown<3 && mcQ.length){
-    const a=mcQ.shift(); mcShown++;
+    const q=mcQ.shift(), a=q.a; mcShown++;
     const el=document.createElement('div');
-    el.className='mcT'+(a.rare?' rare':'');
-    el.innerHTML='<div class="ic">'+a.ic+'</div><div class="tx"><div class="t1">進捗達成！</div>'+
-      '<div class="t2">'+a.nm+'</div></div>';
+    el.className='mcT'+(a.rare?' rare':'')+(q.sp?' split':'');
+    el.innerHTML='<div class="ic">'+a.ic+'</div><div class="tx"><div class="t1">'+
+      (q.sp||'進捗達成！')+'</div><div class="t2">'+a.nm+'</div></div>';
     $('mct').appendChild(el);
     requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('in')));
     sfxAch(a.rare);
     setTimeout(()=>{
       el.classList.remove('in');
       setTimeout(()=>{ el.remove(); mcShown--; mcPump(); },700);
-    }, a.rare?4800:3600);
+    }, q.sp?2600:(a.rare?4800:3600));
   }
 }
 
@@ -1522,10 +1559,11 @@ function reset(){
   p.x=0;p.y=0;p.z=8;p.vx=0;p.vy=0;p.spd=SPD_CRUISE;p.phase=0;p.hp=100;p.st=100;p.boost=0;
   camX=0;camY=0;camZ=p.z-CAM_BACK;shake=0;
   g.t=0;g.pass=0;g.food=0;g.hits=0;g.drill=0;g.rival=0;g.eggT=0;g.cells=1;
-  g.cause='';g.acc=0;g.miss=0;g.tired=false;g.saidEnd=false;
+  g.cause='';g.acc=0;g.miss=0;g.tired=false;g.saidEnd=false;g.rtaSeen={};
   g.flowN=0;g.wallN=0;g.cellN=0;g.mark=0;g.land=0;g.boom=0;g.fertT=0;g.hold=false;
   g.slow=0;g.faceN=0;g.chain=0;g.chainT=0;g.grazeN=0;g.wasDash=false;
   g.secret=false;g.banked=false;g.saidEnd2=false; SECRET_ON=false;
+  g.rtaSeen={};
   rings.length=0; hitStop=0; FOV=FOVB;
   g.lastWall=-9;g.lastHit=-9;g.mashLock=false;
   /* time がここで 0 に戻るので、time を見ている送信タイマーも戻す。
@@ -1540,6 +1578,7 @@ function reset(){
 }
 function screens(on){
   ['scTitle','scOver','scClear','scPause','scRace'].forEach(id=>$(id).classList.toggle('on',id===on));
+  if(on!==null) rtaPaint(false,0);
   if(on==='scTitle') paintRank();
   $('hud').classList.toggle('on', on===null);
   $('pads').classList.toggle('on', on===null);
@@ -1848,6 +1887,28 @@ function togglePause(){
   }
 }
 function fmt(s){const m=Math.floor(s/60);return m+':'+String(Math.floor(s%60)).padStart(2,'0');}
+/* RTA 表示用。分:秒.1/100 まで出す */
+function fmtR(s){
+  s=Math.max(0,s);
+  const m=Math.floor(s/60), q=s-m*60;
+  return m+':'+String(Math.floor(q)).padStart(2,'0')
+    +'.'+String(Math.floor((q%1)*100)).padStart(2,'0');
+}
+function rtaNow(){
+  return fmtR(state==='story'||state==='scard' ? (ST.run||0) : g.t);
+}
+function rtaPaint(on,t){
+  const e=$('rtaT');
+  if(!on){ if(e.classList.contains('on')) e.classList.remove('on'); return; }
+  e.classList.add('on');
+  e.textContent=fmtR(t);
+}
+function setMode(v){
+  SV.rta = v?1:0; save();
+  $('selMode').value = SV.rta?'rta':'normal';
+  $('wrap').classList.toggle('rta',!!SV.rta);
+  if(!SV.rta) rtaPaint(false,0);
+}
 $('bStart').onclick=start; $('bRetry').onclick=start; $('bAgain').onclick=start;
 function toTitle(){
   SECRET_ON=false;
@@ -2164,6 +2225,7 @@ function closePanel(id){
   };
   mk('padLb',v=>padL=v); mk('padRb',v=>padR=v); mk('padJb',v=>padJ=v);
 })();
+$('selMode').onchange=e=>{ setMode(e.target.value==='rta'); sfxPick(); };
 $('bStory').onclick=()=>openPanel('pStory');
 $('bGacha').onclick=()=>openPanel('pGacha');
 $('gaCloseBtn').onclick=()=>closePanel('pGacha');
@@ -2535,6 +2597,7 @@ function hud(){
     ch.classList.add('on');
   } else { ch.classList.remove('on'); ch._n=0; }
   $('iDist').textContent=(raw*TOTAL_CM).toFixed(1);
+  rtaPaint(!!SV.rta, g.t);
   $('iPass').textContent=g.pass.toLocaleString('ja-JP');
   if(NET.on){
     const d=(p.z-NET.o.z)/IMPLANT_Z*TOTAL_CM;
@@ -3440,7 +3503,7 @@ function storyPick(){
 function storyBegin(i){
   actx(); ST.ch=i; ST.t=0; ST.nar=0; ST.done=false;
   ST.px=120; ST.py=GND-PH/2-4; ST.vx=0; ST.vy=0; ST.onG=true; ST.face=1; ST.ph=0;
-  ST.x=0; ST.hp=100; ST.food=0; ST.gates=0; ST.hits=0; ST.inv=0;
+  ST.x=0; ST.hp=100; ST.food=0; ST.gates=0; ST.hits=0; ST.inv=0; ST.run=0;
   shake=0; vigT=0; parts.length=0;
   storyScene();
   screens(null); $('hud').classList.remove('on'); $('pads').classList.add('on');
@@ -3465,6 +3528,7 @@ function storyShowCard(kind){
   $('stCard').classList.add('on');
   $('stTop').classList.remove('on');
   $('stPad').classList.remove('on');
+  rtaPaint(false,0);
   $('stNar').style.opacity=0;
 }
 function storyAdvance(){
@@ -3599,6 +3663,8 @@ function storyUpdate(dt){
   }
   if(vigT>0) vigT=Math.max(0,vigT-dt*2.2);
   $('vig').style.opacity=Math.max(vigT, ST.hp<30?0.16+0.1*Math.sin(time*5):0);
+  ST.run=(ST.run||0)+dt;
+  rtaPaint(!!SV.rta, ST.run);
   $('stBar').style.width=(clamp(ST.px/ST.end,0,1)*100).toFixed(1)+'%';
   $('stHp').style.width=clamp(ST.hp,0,100)+'%';
   $('stFood').textContent=ST.food;
@@ -4479,7 +4545,7 @@ resize();
   const t=higeSVG('精子','gTitle',[[0,'#ffffff'],[.52,'#ff8fb0'],[1,'#ff3b6b']]);
   if(t) $('titleH1').innerHTML=t;
 })();
-reset(); state='title'; screens('scTitle'); buildRibbon(); paintRank();
+reset(); state='title'; screens('scTitle'); buildRibbon(); paintRank(); setMode(SV.rta);
 if(LOCAL) $('localTag').style.display='block';
 lastT=performance.now()/1000;
 requestAnimationFrame(loop);
