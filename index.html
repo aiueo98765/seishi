@@ -172,14 +172,28 @@
   #stPick{display:flex;flex-direction:column;gap:9px;width:min(92vw,330px)}
   /* ---- ガチャ ---- */
   .btn.lk{opacity:.38}
-  #gaBox{display:flex;flex-direction:column;align-items:center;width:min(92vw,360px)}
-  .gaRow{display:flex;align-items:baseline;gap:9px;margin-bottom:7px;
-    font-size:11px;letter-spacing:.1em;opacity:.7}
-  .gaRow b{font-size:17px;font-weight:800;color:#ffe14d;opacity:1;
-    font-variant-numeric:tabular-nums}
-  .gaRow i{font-style:normal;font-size:10px}
-  #gaRates{margin-top:12px;font-size:9.5px;line-height:1.9;opacity:.42;
-    letter-spacing:.06em;text-align:center}
+  #gaBox{display:flex;flex-direction:column;align-items:center;width:min(92vw,370px);
+    padding:18px 18px 16px;border-radius:18px;
+    background:linear-gradient(#ffffff0d,#ffffff03);
+    border:1px solid #d9b45c3d;
+    box-shadow:inset 0 1px 0 #ffeec233,0 18px 48px #0009}
+  .gaRow{display:flex;align-items:baseline;gap:10px;margin-bottom:9px;
+    width:100%;justify-content:space-between;
+    font-size:10.5px;letter-spacing:.12em;opacity:.62;
+    padding-bottom:7px;border-bottom:1px solid #ffffff12}
+  .gaRow b{font-size:19px;font-weight:800;opacity:1;letter-spacing:.02em;
+    font-variant-numeric:tabular-nums;
+    background:linear-gradient(#fffdf0,#ffe088 48%,#d9901e);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 1px 0 #0008)}
+  .gaRow i{font-style:normal;font-size:10px;opacity:.6}
+  #gaBox .btn{width:100%;letter-spacing:.14em}
+  #gaB10{background:linear-gradient(#fff6d8,#ffd062 52%,#d98f1c);color:#3a1f02;
+    border:1px solid #ffeab0;box-shadow:0 8px 26px #d9901e4d,inset 0 1px 0 #fffdf0}
+  #gaB10.lk{filter:saturate(.3)}
+  #gaRates{margin-top:13px;font-size:9.5px;line-height:2;opacity:.45;
+    letter-spacing:.06em;text-align:center;
+    padding-top:11px;border-top:1px solid #ffffff12;width:100%}
   #gaMsg{margin-top:8px;font-size:11px;color:#ff9bb5;opacity:0;transition:opacity .3s;
     min-height:16px}
   #gaBtns{position:fixed;left:0;right:0;bottom:22px;z-index:20;display:none;
@@ -3805,11 +3819,48 @@ function sfxChime(){ tone(1046,.6,'sine',.10,1568); tone(1568,.8,'sine',.05); }
    出るのはガチャでしか手に入らないスキン。手持ちの果糖で回す。
    累計（位）のほうは減らない別勘定。 */
 const GR={
-  N  :{nm:'並',  s:'N',  c:['#dbe3ec','#8b97a6'], bg:'#2a3139', w:60, back:10},
-  R  :{nm:'珍',  s:'R',  c:['#bfe6ff','#3f8fd0'], bg:'#16304a', w:28, back:30},
-  SR :{nm:'稀',  s:'SR', c:['#eec4ff','#9a53d6'], bg:'#2d1a45', w:10, back:80},
-  SSR:{nm:'至宝',s:'SSR',c:['#fff0bd','#ff8a2e'], bg:'#4a2a08', w: 2, back:200}
+  N  :{nm:'並',  s:'N',  c:['#dbe3ec','#8b97a6'], bg:'#232a33', w:60, back:10,
+       tx:[[0,'#ffffff'],[.42,'#d6dfe9'],[.54,'#7e8b9b'],[.78,'#c7d2de'],[1,'#f2f6fa']]},
+  R  :{nm:'珍',  s:'R',  c:['#bfe6ff','#3f8fd0'], bg:'#102738', w:28, back:30,
+       tx:[[0,'#f2fbff'],[.42,'#a8daff'],[.54,'#2b74bd'],[.78,'#7ec2f5'],[1,'#e3f5ff']]},
+  SR :{nm:'稀',  s:'SR', c:['#eec4ff','#9a53d6'], bg:'#241439', w:10, back:80,
+       tx:[[0,'#fdf2ff'],[.42,'#e2b6ff'],[.54,'#7c33c6'],[.78,'#c98ff0'],[1,'#f6e2ff']]},
+  SSR:{nm:'至宝',s:'SSR',c:['#fff0bd','#ff8a2e'], bg:'#3d2206', w: 2, back:200,
+       tx:[[0,'#fffdf2'],[.36,'#ffe79a'],[.52,'#d9801a'],[.68,'#ffd96e'],[.86,'#b85f10'],[1,'#fff6cf']]}
 };
+/* 字は「影→太い縁→グラデ→上半分のつや→細い光→走るつや」の順に重ねる */
+function gText(c,txt,x,y,size,stops,o){
+  o=o||{};
+  c.save();
+  c.textAlign=o.align||'center'; c.textBaseline=o.base||'alphabetic';
+  c.font=(o.weight||900)+' '+Math.round(size)+'px '+(o.font||RAINF);
+  c.lineJoin='round'; c.lineCap='round';
+  c.fillStyle='rgba(0,0,0,.5)';
+  for(let i=1;i<=3;i++) c.fillText(txt,x+i*size*0.016,y+i*size*0.034);
+  c.strokeStyle=o.edge||'rgba(18,9,3,.95)'; c.lineWidth=size*(o.ew||0.17);
+  c.strokeText(txt,x,y);
+  if(o.edge2){ c.strokeStyle=o.edge2; c.lineWidth=size*(o.ew2||0.085); c.strokeText(txt,x,y); }
+  const g=c.createLinearGradient(0,y-size*0.88,0,y+size*0.2);
+  for(let i=0;i<stops.length;i++) g.addColorStop(stops[i][0],stops[i][1]);
+  c.fillStyle=g; c.fillText(txt,x,y);
+  c.save();
+  c.beginPath(); c.rect(x-size*9,y-size*1.15,size*18,size*0.5); c.clip();
+  c.fillStyle='rgba(255,255,255,.32)'; c.fillText(txt,x,y);
+  c.restore();
+  c.strokeStyle=o.rim||'rgba(255,250,224,.45)'; c.lineWidth=size*0.022;
+  c.strokeText(txt,x,y);
+  if(o.sheen){
+    c.save();
+    const p=((time*0.5+(o.ph||0))%2.4-0.7)*size*5;
+    c.beginPath();
+    c.moveTo(x-size*4+p,y+size*0.55); c.lineTo(x-size*3.55+p,y+size*0.55);
+    c.lineTo(x-size*2.7+p,y-size*1.25); c.lineTo(x-size*3.15+p,y-size*1.25);
+    c.closePath(); c.clip();
+    c.fillStyle='rgba(255,255,255,.62)'; c.fillText(txt,x,y);
+    c.restore();
+  }
+  c.restore();
+}
 const GA_COST1=120, GA_COST10=1080, GA_PITY=60;
 const GPOOL=()=>SKINS.filter(s=>s.gacha);
 function gsHave(id){ return (SV.gs&&SV.gs[id])||0; }   /* skinOK より先に使うので関数宣言 */
@@ -3857,135 +3908,386 @@ function gaPull(n){
 function gaMsg(t){ const e=$('gaMsg'); e.textContent=t;
   e.style.opacity=1; setTimeout(()=>{e.style.opacity=0;},1800); }
 
-/* --- 演出 --- */
-const GA={res:[],ph:'',t:0,flip:0,best:'N',spark:[]};
+/* --- 演出：金のカプセルが高速で回り、割れて、中身が出てくる --- */
+const GA={res:[],ph:'',t:0,flip:0,best:'N',spark:[],frag:[],ang:0,spin:0,hero:null,
+          cracks:[],shk:0};
+const GA_PH={in:0.55, spin:1.75, crack:0.62, pop:0.42, hero:1.15};
 function gaShow(out){
-  GA.res=out; GA.ph='shake'; GA.t=0; GA.flip=0; GA.spark.length=0;
+  GA.res=out; GA.ph='in'; GA.t=0; GA.flip=0; GA.ang=0; GA.spin=0; GA.shk=0;
+  GA.spark.length=0; GA.frag.length=0; GA.cracks.length=0;
   const ord={N:0,R:1,SR:2,SSR:3};
-  GA.best='N';
-  out.forEach(o=>{ if(ord[o.m.r]>ord[GA.best]) GA.best=o.m.r; });
+  GA.best='N'; GA.hero=out[0].m;
+  out.forEach(o=>{ if(ord[o.m.r]>ord[GA.best]){ GA.best=o.m.r; GA.hero=o.m; } });
+  /* ひびの形は先に決めておく */
+  for(let i=0;i<7;i++){
+    const a=i/7*TAU+Math.random()*0.5, seg=[];
+    let x=0,y=0,aa=a;
+    for(let k=0;k<5;k++){
+      aa+=rnd(-0.5,0.5); const d=0.17+k*0.2;
+      x=Math.cos(aa)*d; y=Math.sin(aa)*d; seg.push([x,y]);
+    }
+    GA.cracks.push({a:a,seg:seg,at:0.1+i*0.11});
+  }
   closePanel('pGacha'); $('gaBtns').classList.remove('on');
-  $('scTitle').classList.remove('on');     /* 演出中はタイトルを引っ込める */
-  state='gacha'; sfxBox();
+  $('scTitle').classList.remove('on');
+  state='gacha'; sfxDrop();
 }
+function gaNext(p){ GA.ph=p; GA.t=0; }
 function gaUpdate(dt){
   time+=dt; GA.t+=dt;
-  if(GA.ph==='shake'){
-    if(GA.t>0.26 && GA.t<1.05 && Math.random()<dt*9) sfxKnock();
-    if(GA.t>=1.15){
-      GA.ph='burst'; GA.t=0; flashWhite=1; sfxBurst(GA.best);
-      for(let i=0;i<70;i++){ const a=Math.random()*TAU, v=rnd(200,950);
+  const P=GA.ph;
+  if(GA.shk>0) GA.shk=Math.max(0,GA.shk-dt*26);
+  if(P==='in'){
+    if(GA.t>=GA_PH.in){ gaNext('spin'); sfxSpin(); }
+  } else if(P==='spin'){
+    const u=GA.t/GA_PH.spin;
+    GA.spin=lerp(2.5,44,Math.pow(u,1.7));
+    GA.ang+=GA.spin*dt;
+    GA.shk=Math.max(GA.shk,u*u*5);
+    if(Math.random()<dt*u*10) sfxRattle();
+    if(GA.t>=GA_PH.spin){ gaNext('crack'); sfxCrack(); }
+  } else if(P==='crack'){
+    const u=GA.t/GA_PH.crack;
+    GA.spin=lerp(44,12,u);
+    GA.ang+=GA.spin*dt;
+    GA.shk=Math.max(GA.shk,6+u*13);
+    if(Math.random()<dt*14){ sfxCrack(); }
+    if(GA.t>=GA_PH.crack){
+      gaNext('pop'); flashWhite=1; GA.shk=24;
+      sfxBurst(GA.best); shockwave(gaRGB(GA.best),1.5);
+      setTimeout(()=>shockwave(gaRGB(GA.best),1.1),120);
+      for(let i=0;i<14;i++){
+        const a=i/14*TAU+rnd(-.2,.2), v=rnd(420,1100);
+        GA.frag.push({x:0,y:0,vx:Math.cos(a)*v,vy:Math.sin(a)*v-180,
+          r:rnd(.1,.28),ro:rnd(0,TAU),rv:rnd(-9,9),life:1.6,a0:a});
+      }
+      for(let i=0;i<110;i++){
+        const a=Math.random()*TAU, v=rnd(220,1300);
         GA.spark.push({x:W*.5,y:H*.5,vx:Math.cos(a)*v,vy:Math.sin(a)*v,
-          life:rnd(.4,1.2),max:1.2,r:rnd(1.5,4.5)}); }
+          life:rnd(.35,1.3),max:1.3,r:rnd(1.5,5)});
+      }
     }
-  } else if(GA.ph==='burst'){
-    if(GA.t>=0.55){ GA.ph='cards'; GA.t=0; }
-  } else if(GA.ph==='cards'){
-    if(GA.flip<GA.res.length && GA.t>0.34+GA.flip*0.2){
+  } else if(P==='pop'){
+    if(GA.t>=GA_PH.pop){ gaNext('hero'); sfxHero(GA.best); }
+  } else if(P==='hero'){
+    if(GA.t>=GA_PH.hero){
+      if(GA.res.length>1) gaNext('cards');
+      else { GA.ph='done'; gaBtnShow(); }
+    }
+  } else if(P==='cards'){
+    if(GA.flip<GA.res.length && GA.t>0.2+GA.flip*0.17){
       const o=GA.res[GA.flip]; GA.flip++;
       sfxCard(o.m.r);
-      if(o.m.r==='SSR'){ shockwave('255,214,120',1.3); flashWhite=Math.max(flashWhite,.55); }
-      else if(o.m.r==='SR') shockwave('220,160,255',0.7);
+      if(o.m.r==='SSR'){ shockwave('255,214,120',1.2); flashWhite=Math.max(flashWhite,.5); }
+      else if(o.m.r==='SR') shockwave('220,160,255',0.6);
     }
-    if(GA.flip>=GA.res.length && GA.t>0.34+GA.res.length*0.2+0.45){
-      GA.ph='done'; $('gaBtns').classList.add('on');
-      $('gaAgain').textContent=(GA.res.length===10?'もう10連':'もう1回')
-        +'（'+(GA.res.length===10?GA_COST10:GA_COST1)+'）';
-    }
+    if(GA.flip>=GA.res.length && GA.t>0.2+GA.res.length*0.17+0.4){ GA.ph='done'; gaBtnShow(); }
   }
-  if(flashWhite>0) flashWhite=Math.max(0,flashWhite-dt*1.5);
+  if(flashWhite>0) flashWhite=Math.max(0,flashWhite-dt*1.6);
   for(let i=GA.spark.length-1;i>=0;i--){
     const q=GA.spark[i]; q.life-=dt;
     if(q.life<=0){ GA.spark.splice(i,1); continue; }
-    const k=Math.pow(0.05,dt);
-    q.x+=q.vx*dt; q.y+=q.vy*dt; q.vx*=k; q.vy=q.vy*k+120*dt;
+    const k=Math.pow(0.06,dt);
+    q.x+=q.vx*dt; q.y+=q.vy*dt; q.vx*=k; q.vy=q.vy*k+140*dt;
+  }
+  for(let i=GA.frag.length-1;i>=0;i--){
+    const f=GA.frag[i]; f.life-=dt;
+    if(f.life<=0){ GA.frag.splice(i,1); continue; }
+    f.x+=f.vx*dt; f.y+=f.vy*dt; f.vy+=1400*dt; f.ro+=f.rv*dt;
+    f.vx*=Math.pow(0.5,dt);
   }
   for(let i=rings.length-1;i>=0;i--){ rings[i].t+=dt; if(rings[i].t>0.62) rings.splice(i,1); }
 }
+function gaBtnShow(){
+  $('gaBtns').classList.add('on');
+  $('gaAgain').textContent=(GA.res.length===10?'もう10連':'もう1回')
+    +'（'+(GA.res.length===10?GA_COST10:GA_COST1)+'）';
+}
 function gaSkip(){
   if(GA.ph==='done') return;
-  GA.ph='cards'; GA.t=99; GA.flip=GA.res.length;
+  if(GA.ph==='cards'||GA.ph==='hero'){
+    GA.flip=GA.res.length; GA.ph=GA.res.length>1?'cards':'done';
+    GA.t=99; if(GA.ph==='done') gaBtnShow();
+  } else { gaNext('crack'); GA.t=GA_PH.crack-0.01; }
 }
 function gaClose(){
   $('gaBtns').classList.remove('on');
   state='title'; screens('scTitle'); openPanel('pGacha');
 }
-function rrect(c,x,y,w,h,r){
-  c.beginPath();
-  c.moveTo(x+r,y); c.lineTo(x+w-r,y); c.quadraticCurveTo(x+w,y,x+w,y+r);
-  c.lineTo(x+w,y+h-r); c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
-  c.lineTo(x+r,y+h); c.quadraticCurveTo(x,y+h,x,y+h-r);
-  c.lineTo(x,y+r); c.quadraticCurveTo(x,y,x+r,y); c.closePath();
+const gaRGB=r=>({N:'220,232,245',R:'150,210,255',SR:'220,160,255',SSR:'255,214,120'})[r];
+
+/* --- 金のカプセル --- */
+function gaCapsule(cx,cy,R,ang,crack,blur){
+  const c=ctx;
+  /* 下の影と反射 */
+  c.save();
+  c.globalAlpha=.5;
+  const sh=c.createRadialGradient(cx,cy+R*1.25,0,cx,cy+R*1.25,R*1.1);
+  sh.addColorStop(0,'rgba(0,0,0,.75)'); sh.addColorStop(1,'rgba(0,0,0,0)');
+  c.fillStyle=sh; c.beginPath(); c.ellipse(cx,cy+R*1.25,R*1.05,R*0.2,0,0,TAU); c.fill();
+  c.restore();
+  /* 回転のぶれ */
+  if(blur>6){
+    c.save(); c.globalCompositeOperation='lighter';
+    for(let i=0;i<3;i++){
+      const yy=cy+(i-1)*R*0.46;
+      c.strokeStyle='rgba(255,232,170,'+(0.04+0.05*Math.min(1,blur/40))+')';
+      c.lineWidth=R*0.07;
+      c.beginPath(); c.ellipse(cx,yy,R*1.04,R*0.07,0,0,TAU); c.stroke();
+    }
+    c.restore();
+  }
+  c.save();
+  c.beginPath(); c.arc(cx,cy,R,0,TAU); c.clip();
+  /* 地色 */
+  const g=c.createRadialGradient(cx-R*.34,cy-R*.40,R*.04,cx+R*.1,cy+R*.15,R*1.25);
+  g.addColorStop(0,'#fffdf0'); g.addColorStop(.18,'#ffeaa6');
+  g.addColorStop(.46,'#dcab3a'); g.addColorStop(.72,'#9a6a18');
+  g.addColorStop(.92,'#52360b'); g.addColorStop(1,'#241704');
+  c.fillStyle=g; c.fillRect(cx-R,cy-R,R*2,R*2);
+  /* 磨いた金属は「空と地面の境目」が映る。そこを強く出す */
+  const env=c.createLinearGradient(0,cy-R,0,cy+R);
+  env.addColorStop(0,   'rgba(255,252,232,.42)');
+  env.addColorStop(.26, 'rgba(255,238,178,.10)');
+  env.addColorStop(.33, 'rgba(36,22,4,.55)');
+  env.addColorStop(.40, 'rgba(255,248,206,.62)');
+  env.addColorStop(.46, 'rgba(255,230,160,.18)');
+  env.addColorStop(.62, 'rgba(26,16,3,.52)');
+  env.addColorStop(.84, 'rgba(255,224,150,.34)');
+  env.addColorStop(1,   'rgba(120,78,18,.30)');
+  c.fillStyle=env; c.fillRect(cx-R,cy-R,R*2,R*2);
+  /* 縦に伸びる照り（磨き目） */
+  const an=c.createLinearGradient(cx-R,0,cx+R,0);
+  an.addColorStop(0,'rgba(0,0,0,.34)');
+  an.addColorStop(.2,'rgba(255,246,206,.22)');
+  an.addColorStop(.36,'rgba(0,0,0,.12)');
+  an.addColorStop(.58,'rgba(255,250,224,.30)');
+  an.addColorStop(.78,'rgba(0,0,0,.26)');
+  an.addColorStop(1,'rgba(255,230,160,.18)');
+  c.fillStyle=an; c.fillRect(cx-R,cy-R,R*2,R*2);
+  /* 下半球を沈める */
+  c.fillStyle='rgba(32,19,3,.26)';
+  c.fillRect(cx-R,cy+R*0.04,R*2,R);
+  /* 合わせ目まわりの細かい刻み（回ると流れる） */
+  c.save();
+  c.globalAlpha=blur>26?0.25:0.6;
+  for(let i=0;i<30;i++){
+    const a=i/30*TAU+ang*0.35;
+    const co=Math.cos(a); if(co<=0) continue;
+    const xx=cx+Math.sin(a)*R*0.99;
+    c.fillStyle='rgba(60,38,8,.5)';
+    c.fillRect(xx-R*0.012*co,cy-R*0.1,R*0.024*co,R*0.085);
+    c.fillStyle='rgba(255,243,200,.45)';
+    c.fillRect(xx-R*0.012*co,cy-R*0.1,R*0.01*co,R*0.085);
+  }
+  c.restore();
+  /* 合わせ目 */
+  c.strokeStyle='rgba(44,28,5,.9)'; c.lineWidth=R*.075;
+  c.beginPath(); c.ellipse(cx,cy+R*0.04,R*1.0,R*0.1,0,0,TAU); c.stroke();
+  /* 合わせ目の照りは下側の弧だけ。全周に引くと輪っかに見える */
+  c.strokeStyle='rgba(255,246,210,.75)'; c.lineWidth=R*.022;
+  c.beginPath(); c.ellipse(cx,cy+R*0.016,R*1.0,R*0.1,0,0.08,Math.PI-0.08); c.stroke();
+  /* 回る刻印 */
+  const cw=Math.cos(ang);
+  if(cw>0.02){
+    c.save();
+    c.translate(cx+Math.sin(ang)*R*0.52,cy-R*0.2);
+    c.scale(cw,1);
+    c.globalAlpha=Math.min(1,cw*1.6)*(blur>24?0.45:1);
+    c.fillStyle='rgba(74,48,10,.85)';
+    c.beginPath(); c.arc(0,0,R*0.3,0,TAU); c.fill();
+    c.fillStyle='rgba(255,243,206,.95)';
+    c.font='900 '+Math.round(R*0.38)+'px '+RAINF;
+    c.textAlign='center'; c.textBaseline='middle';
+    c.fillText('福',0,R*0.02);
+    c.restore();
+  }
+  /* 光沢（主と副の2つ） */
+  const sp=c.createRadialGradient(cx-R*.40,cy-R*.46,0,cx-R*.40,cy-R*.46,R*.58);
+  sp.addColorStop(0,'rgba(255,255,255,.98)');
+  sp.addColorStop(.35,'rgba(255,252,232,.55)');
+  sp.addColorStop(1,'rgba(255,255,255,0)');
+  c.fillStyle=sp; c.beginPath();
+  c.ellipse(cx-R*.40,cy-R*.46,R*.42,R*.25,-0.55,0,TAU); c.fill();
+  c.fillStyle='rgba(255,255,255,.85)';
+  c.beginPath(); c.ellipse(cx-R*.46,cy-R*.52,R*.13,R*.075,-0.55,0,TAU); c.fill();
+  c.fillStyle='rgba(255,236,176,.45)';
+  c.beginPath(); c.ellipse(cx+R*.44,cy+R*.52,R*.22,R*.1,-0.6,0,TAU); c.fill();
+  /* ひび */
+  if(crack>0){
+    for(let i=0;i<GA.cracks.length;i++){
+      const k=GA.cracks[i];
+      if(crack<k.at) continue;
+      const u=clamp((crack-k.at)/0.5,0,1);
+      c.strokeStyle='rgba(30,16,2,.9)'; c.lineWidth=R*0.045;
+      c.beginPath(); c.moveTo(cx,cy);
+      for(let q=0;q<k.seg.length;q++){
+        const t=(q+1)/k.seg.length;
+        if(t>u+0.0001) break;
+        c.lineTo(cx+k.seg[q][0]*R*1.5,cy+k.seg[q][1]*R*1.5);
+      }
+      c.stroke();
+      c.strokeStyle='rgba(255,246,200,'+(0.4+0.6*u)+')'; c.lineWidth=R*0.02;
+      c.stroke();
+    }
+    /* 内から漏れる光 */
+    const lg=c.createRadialGradient(cx,cy,0,cx,cy,R*(0.3+crack*1.2));
+    lg.addColorStop(0,'rgba(255,250,220,'+(0.25+crack*0.7)+')');
+    lg.addColorStop(1,'rgba(255,200,90,0)');
+    c.save(); c.globalCompositeOperation='lighter';
+    c.fillStyle=lg; c.fillRect(cx-R,cy-R,R*2,R*2); c.restore();
+  }
+  c.restore();
+  /* ふちの回り込み光 */
+  const fr=c.createRadialGradient(cx,cy,R*0.8,cx,cy,R*1.02);
+  fr.addColorStop(0,'rgba(255,236,170,0)'); fr.addColorStop(1,'rgba(255,244,196,.75)');
+  c.save(); c.beginPath(); c.arc(cx,cy,R,0,TAU); c.clip();
+  c.fillStyle=fr; c.fillRect(cx-R,cy-R,R*2,R*2); c.restore();
+  c.strokeStyle='rgba(255,240,186,.55)'; c.lineWidth=R*.022;
+  c.beginPath(); c.arc(cx,cy,R*0.99,0,TAU); c.stroke();
 }
+function gaFrags(cx,cy,R){
+  for(let i=0;i<GA.frag.length;i++){
+    const f=GA.frag[i], a=clamp(f.life/1.6,0,1);
+    ctx.save();
+    ctx.translate(cx+f.x,cy+f.y); ctx.rotate(f.ro);
+    ctx.globalAlpha=a;
+    const g=ctx.createLinearGradient(0,-R*f.r,0,R*f.r);
+    g.addColorStop(0,'#ffe9a8'); g.addColorStop(.5,'#d19b2c'); g.addColorStop(1,'#6b4710');
+    ctx.fillStyle=g;
+    ctx.beginPath();
+    ctx.moveTo(-R*f.r,-R*f.r*0.6);
+    ctx.lineTo(R*f.r*0.9,-R*f.r*0.9);
+    ctx.lineTo(R*f.r,R*f.r*0.5);
+    ctx.lineTo(-R*f.r*0.5,R*f.r);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='rgba(255,248,214,.7)'; ctx.lineWidth=Math.max(1,R*0.012);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
 function gaRender(){
-  const B=GR[GA.best];
-  ctx.fillStyle='#07040a'; ctx.fillRect(0,0,W,H);
+  const col=gaRGB(GA.best), P=GA.ph;
+  ctx.fillStyle='#06040a'; ctx.fillRect(0,0,W,H);
+  ctx.save();
+  if(GA.shk>0.2) ctx.translate(rnd(-GA.shk,GA.shk),rnd(-GA.shk,GA.shk));
+  const cx=W*.5, cy=H*.46, R=Math.min(W,H)*0.17;
+
+  /* 背の光芒 */
+  const beam = P==='in'?0.25 : P==='spin'?0.3+GA.t/GA_PH.spin*0.6
+             : P==='crack'?0.9+GA.t : 1.6;
   ctx.save(); ctx.globalCompositeOperation='lighter';
-  const n=GA.ph==='shake'?10:26;
-  for(let i=0;i<n;i++){
-    const a=i/n*TAU+time*0.1;
-    const al=(GA.ph==='shake'?0.05:0.14)*(0.3+0.7*hash(i,3));
-    ctx.strokeStyle=rgba(hex2rgb(B.c[1]),al.toFixed(3));
-    ctx.lineWidth=2+hash(i,9)*14;
-    ctx.beginPath(); ctx.moveTo(W*.5,H*.5);
-    ctx.lineTo(W*.5+Math.cos(a)*Math.max(W,H),H*.5+Math.sin(a)*Math.max(W,H));
+  for(let i=0;i<22;i++){
+    const a=i/22*TAU+time*0.12;
+    ctx.strokeStyle='rgba('+col+','+(0.04*beam*(0.3+0.7*hash(i,3))).toFixed(3)+')';
+    ctx.lineWidth=3+hash(i,9)*18;
+    ctx.beginPath(); ctx.moveTo(cx,cy);
+    ctx.lineTo(cx+Math.cos(a)*Math.max(W,H),cy+Math.sin(a)*Math.max(W,H));
     ctx.stroke();
   }
   ctx.restore();
-  if(GA.ph==='shake'||GA.ph==='burst'){
-    const u=GA.ph==='shake'?GA.t/1.15:1;
-    const sh=GA.ph==='shake'?Math.pow(u,3)*16:0;
-    const s=Math.min(W,H)*0.17;
-    ctx.save();
-    ctx.translate(W*.5+rnd(-sh,sh),H*.5+rnd(-sh,sh));
-    const sc=GA.ph==='burst'?1+GA.t*2.6:1;
-    ctx.scale(sc,sc); ctx.globalAlpha=GA.ph==='burst'?Math.max(0,1-GA.t*2.2):1;
-    ctx.fillStyle='#6b4a23'; ctx.fillRect(-s,-s*.78,s*2,s*1.56);
-    ctx.fillStyle='#8a6230'; ctx.fillRect(-s,-s*.78,s*2,s*.4);
-    ctx.fillStyle='#c9a45c'; ctx.fillRect(-s*.14,-s*.78,s*.28,s*1.56);
-    ctx.fillStyle='#3a2612'; ctx.fillRect(-s,-s*.42,s*2,s*.08);
-    ctx.fillStyle='#e9d6a8';
-    ctx.font='900 '+Math.round(s*0.5)+'px '+RAINF;
-    ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText('福',0,s*0.26);
-    ctx.restore();
+
+  if(P==='in'||P==='spin'||P==='crack'){
+    let yy=cy, rr=R, cr=0;
+    if(P==='in'){
+      const u=clamp(GA.t/GA_PH.in,0,1);
+      yy=cy-(1-u)*H*0.55; rr=R*(0.7+0.3*u);
+      if(u>0.86) rr=R*(1+ (1-(u-0.86)/0.14)*0.0);
+    } else if(P==='spin'){
+      const u=GA.t/GA_PH.spin;
+      yy=cy-Math.sin(u*Math.PI)*R*0.22;
+      rr=R*(1+0.05*Math.sin(GA.t*22));
+    } else {
+      const u=GA.t/GA_PH.crack;
+      cr=u; rr=R*(1+u*0.14);
+    }
+    gaCapsule(cx,yy,rr,GA.ang,cr,GA.spin);
   }
-  if(GA.ph==='cards'||GA.ph==='done'){
-    const one=GA.res.length===1;
-    const cols=one?1:5, rows=one?1:2;
-    const cw=one?Math.min(W*0.5,H*0.34):Math.min(W*0.168,H*0.17);
-    const chh=cw*1.42, gx=cw*0.16, gy=chh*0.14;
+
+  if(P==='pop'||P==='hero'||P==='cards'||P==='done'){
+    gaFrags(cx,cy,R);
+  }
+
+  /* 中身の登場 */
+  if(P==='hero'||((P==='cards'||P==='done')&&GA.res.length===1)){
+    const u=P==='hero'?clamp(GA.t/0.42,0,1):1;
+    const pop=u<1?(0.2+1.25*u-Math.pow(u,2)*0.45):1;
+    ctx.save(); ctx.globalCompositeOperation='lighter';
+    const gg=ctx.createRadialGradient(cx,cy,0,cx,cy,R*3.2);
+    gg.addColorStop(0,'rgba('+col+',.5)'); gg.addColorStop(1,'rgba('+col+',0)');
+    ctx.fillStyle=gg; ctx.beginPath(); ctx.arc(cx,cy,R*3.2,0,TAU); ctx.fill();
+    ctx.restore();
+    paintHead(ctx,cx,cy,R*0.95*pop,GA.hero,time);
+    const al=clamp((GA.t-0.3)/0.3,0,1);
+    if(P!=='hero'||al>0){
+      const G=GR[GA.best];
+      ctx.save(); ctx.globalAlpha=P==='hero'?al:1;
+      /* 等級の帯 */
+      ctx.save(); ctx.globalCompositeOperation='lighter';
+      const bg2=ctx.createLinearGradient(cx-R*2.4,0,cx+R*2.4,0);
+      bg2.addColorStop(0,'rgba('+col+',0)');
+      bg2.addColorStop(.5,'rgba('+col+',.3)');
+      bg2.addColorStop(1,'rgba('+col+',0)');
+      ctx.fillStyle=bg2; ctx.fillRect(cx-R*2.4,cy-R*2.28,R*4.8,R*0.62);
+      ctx.restore();
+      gText(ctx,G.s,cx,cy-R*1.86,R*0.56,G.tx,
+        {sheen:GA.best!=='N',font:'sans-serif',ew:0.2,
+         rim:'rgba(255,255,255,.6)'});
+      gText(ctx,GA.hero.nm,cx,cy+R*1.92,R*0.52,G.tx,{sheen:GA.best!=='N'});
+      ctx.textAlign='center';
+      ctx.fillStyle='rgba(255,250,240,.66)';
+      ctx.font='600 '+Math.round(R*0.175)+'px sans-serif';
+      ctx.fillText(GA.res.length===1&&GA.res[0].neu?'— NEW —':GA.hero.d,cx,cy+R*2.4);
+      ctx.restore();
+    }
+  }
+
+  /* 10連の札 */
+  if(P==='cards'||(P==='done'&&GA.res.length>1)){
+    const cols=5, rows=2;
+    const cw=Math.min(W*0.168,H*0.17), chh=cw*1.42, gx=cw*0.16, gy=chh*0.14;
     const tw=cols*cw+(cols-1)*gx, th=rows*chh+(rows-1)*gy;
     for(let i=0;i<GA.res.length;i++){
       const r=Math.floor(i/cols), q=i%cols;
       const x=W*.5-tw/2+q*(cw+gx)+cw/2;
       const y=H*.5-th/2+r*(chh+gy)+chh/2;
       const open=i<GA.flip;
-      const ap=clamp((GA.t-(0.34+i*0.2))/0.26,0,1);
+      const ap=clamp((GA.t-(0.2+i*0.17))/0.24,0,1);
       gaCard(x,y,cw,chh,GA.res[i],open,open?ap:0);
     }
   }
+
   for(let i=0;i<GA.spark.length;i++){
     const q=GA.spark[i], a=clamp(q.life/q.max,0,1);
-    ctx.fillStyle=rgba(hex2rgb(B.c[0]),(a*0.9).toFixed(3));
+    ctx.fillStyle='rgba('+col+','+(a*0.9).toFixed(3)+')';
     ctx.beginPath(); ctx.arc(q.x,q.y,q.r*(0.4+a),0,TAU); ctx.fill();
   }
   for(let i=0;i<rings.length;i++){
     const rr2=rings[i], u=rr2.t/0.62;
     ctx.strokeStyle='rgba('+rr2.c+','+((1-u)*0.5*rr2.p).toFixed(3)+')';
-    ctx.lineWidth=(1-u)*16*rr2.p+1;
-    ctx.beginPath(); ctx.arc(W*.5,H*.5,u*Math.max(W,H)*0.5+12,0,TAU); ctx.stroke();
+    ctx.lineWidth=(1-u)*18*rr2.p+1;
+    ctx.beginPath(); ctx.arc(W*.5,H*.5,u*Math.max(W,H)*0.56+12,0,TAU); ctx.stroke();
   }
+  ctx.restore();
   if(flashWhite>0){
-    ctx.fillStyle='rgba(255,252,246,'+(flashWhite*0.88).toFixed(3)+')';
+    ctx.fillStyle='rgba(255,252,246,'+(flashWhite*0.9).toFixed(3)+')';
     ctx.fillRect(0,0,W,H);
   }
   if(GA.ph!=='done'){
-    ctx.fillStyle='rgba(255,255,255,.3)';
+    ctx.fillStyle='rgba(255,255,255,.28)';
     ctx.font='600 '+Math.round(Math.min(W,H)*0.021)+'px sans-serif';
     ctx.textAlign='center'; ctx.textBaseline='alphabetic';
     ctx.fillText('画面をタップでとばす',W*.5,H-Math.min(W,H)*0.045);
   }
+}
+
+function rrect(c,x,y,w,h,r){
+  c.beginPath();
+  c.moveTo(x+r,y); c.lineTo(x+w-r,y); c.quadraticCurveTo(x+w,y,x+w,y+r);
+  c.lineTo(x+w,y+h-r); c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  c.lineTo(x+r,y+h); c.quadraticCurveTo(x,y+h,x,y+h-r);
+  c.lineTo(x,y+r); c.quadraticCurveTo(x,y,x+r,y); c.closePath();
 }
 function gaCard(cx,cy,w,h,o,open,ap){
   const R=GR[o.m.r];
@@ -4001,37 +4303,76 @@ function gaCard(cx,cy,w,h,o,open,ap){
     ctx.restore(); return;
   }
   ctx.globalAlpha=Math.max(0.15,ap);
-  const fg=ctx.createLinearGradient(0,-h/2,0,h/2);
-  fg.addColorStop(0,R.c[0]); fg.addColorStop(1,R.c[1]);
+  /* 外わく（金属のふち） */
+  const fg=ctx.createLinearGradient(-w/2,-h/2,w/2,h/2);
+  fg.addColorStop(0,R.c[0]); fg.addColorStop(.42,R.c[1]);
+  fg.addColorStop(.58,R.c[0]); fg.addColorStop(1,R.c[1]);
   rrect(ctx,-w/2,-h/2,w,h,w*0.09);
-  ctx.fillStyle=fg; ctx.fill();
-  rrect(ctx,-w/2+w*0.045,-h/2+w*0.045,w-w*0.09,h-w*0.09,w*0.06);
-  ctx.fillStyle=R.bg; ctx.fill();
+  ctx.shadowColor='rgba(0,0,0,.6)'; ctx.shadowBlur=w*0.14; ctx.shadowOffsetY=w*0.04;
+  ctx.fillStyle=fg; ctx.fill(); ctx.shadowBlur=0; ctx.shadowOffsetY=0;
+  /* 内側の板 */
+  rrect(ctx,-w/2+w*0.05,-h/2+w*0.05,w-w*0.1,h-w*0.1,w*0.06);
+  const ig=ctx.createLinearGradient(0,-h/2,0,h/2);
+  ig.addColorStop(0,R.bg); ig.addColorStop(.55,'#0b0810'); ig.addColorStop(1,R.bg);
+  ctx.fillStyle=ig; ctx.fill();
   ctx.save();
-  rrect(ctx,-w/2+w*0.045,-h/2+w*0.045,w-w*0.09,h-w*0.09,w*0.06); ctx.clip();
-  if(o.m.r==='SSR'||o.m.r==='SR'){
+  rrect(ctx,-w/2+w*0.05,-h/2+w*0.05,w-w*0.1,h-w*0.1,w*0.06); ctx.clip();
+  /* 後光 */
+  ctx.save(); ctx.globalCompositeOperation='lighter';
+  const gg=ctx.createRadialGradient(0,-h*0.06,0,0,-h*0.06,w*0.72);
+  gg.addColorStop(0,R.c[0]+(o.m.r==='N'?'44':'88')); gg.addColorStop(1,R.c[0]+'00');
+  ctx.fillStyle=gg; ctx.beginPath(); ctx.arc(0,-h*0.06,w*0.72,0,TAU); ctx.fill();
+  /* 放射 */
+  for(let k=0;k<14;k++){
+    const a=k/14*TAU+time*0.08;
+    ctx.strokeStyle=R.c[0]+(o.m.r==='SSR'?'2a':o.m.r==='SR'?'22':'14');
+    ctx.lineWidth=w*0.05;
+    ctx.beginPath(); ctx.moveTo(0,-h*0.06);
+    ctx.lineTo(Math.cos(a)*w,-h*0.06+Math.sin(a)*w); ctx.stroke();
+  }
+  ctx.restore();
+  paintHead(ctx,0,-h*0.03,w*0.185,o.m,time);
+  /* 箔の流れ */
+  if(o.m.r!=='N'){
     ctx.save(); ctx.globalCompositeOperation='lighter';
-    const gg=ctx.createRadialGradient(0,-h*0.08,0,0,-h*0.08,w*0.65);
-    gg.addColorStop(0,R.c[0]+'77'); gg.addColorStop(1,R.c[0]+'00');
-    ctx.fillStyle=gg; ctx.beginPath(); ctx.arc(0,-h*0.08,w*0.65,0,TAU); ctx.fill();
+    const p=((time*0.42+o.m.id.length*0.3)%2.2-0.6)*w*1.6;
+    const sg=ctx.createLinearGradient(p-w*0.3,-h/2,p+w*0.3,h/2);
+    sg.addColorStop(0,'rgba(255,255,255,0)');
+    sg.addColorStop(.5,'rgba(255,255,255,.18)');
+    sg.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=sg; ctx.fillRect(-w/2,-h/2,w,h);
     ctx.restore();
   }
-  paintHead(ctx,0,-h*0.04,w*0.185,o.m,time);
   ctx.restore();
-  ctx.textAlign='center';
+  /* 角飾り */
   ctx.fillStyle=R.c[0];
-  ctx.font='900 '+Math.round(w*0.125)+'px sans-serif';
-  ctx.fillText(R.s,-w*0.30,-h*0.34);
-  ctx.fillStyle='#fff8ee';
-  ctx.font='800 '+Math.round(w*0.125)+'px sans-serif';
-  ctx.fillText(o.m.nm,0,h*0.28);
-  ctx.fillStyle='rgba(255,255,255,.55)';
-  ctx.font='600 '+Math.round(w*0.082)+'px sans-serif';
-  ctx.fillText(o.neu?'NEW':'＋'+o.back+' 果糖',0,h*0.41);
+  [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(q=>{
+    ctx.save(); ctx.translate(q[0]*(w/2-w*0.085),q[1]*(h/2-w*0.085));
+    ctx.beginPath(); ctx.moveTo(0,0);
+    ctx.lineTo(-q[0]*w*0.07,0); ctx.lineTo(0,-q[1]*w*0.07);
+    ctx.closePath(); ctx.fill(); ctx.restore();
+  });
+  /* 等級 */
+  gText(ctx,R.s,-w*0.20,-h*0.325,w*0.155,R.tx,
+    {sheen:o.m.r!=='N',font:'sans-serif',ew:0.22,align:'center'});
+  /* 名まえ */
+  gText(ctx,o.m.nm,0,h*0.30,w*0.16,R.tx,{ew:0.2});
+  ctx.textAlign='center';
+  ctx.fillStyle=o.neu?'rgba(255,236,150,.95)':'rgba(255,255,255,.5)';
+  ctx.font='700 '+Math.round(w*0.085)+'px sans-serif';
+  ctx.fillText(o.neu?'NEW':'＋'+o.back+' 果糖',0,h*0.43);
   ctx.restore();
 }
-function sfxBox(){ tone(90,.5,'sine',.14,60); }
-function sfxKnock(){ tone(rnd(140,220),.07,'square',.06); noise(.06,.05,400,2); }
+function sfxDrop(){ tone(420,.5,'sine',.1,90); noise(.3,.08,300,.8); }
+function sfxSpin(){ tone(150,1.8,'sawtooth',.07,1500); noise(1.7,.05,900,1.4); }
+function sfxRattle(){ tone(rnd(700,1500),.04,'square',.045); }
+function sfxCrack(){ noise(.12,.13,rnd(900,2200),2.4); tone(rnd(180,320),.07,'square',.07); }
+function sfxHero(r){
+  if(r==='SSR'){ [262,392,523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,1.6,'triangle',.14),i*55)); }
+  else if(r==='SR'){ [330,494,659,988].forEach((f,i)=>setTimeout(()=>tone(f,1.1,'triangle',.12),i*65)); }
+  else if(r==='R'){ [392,587,784].forEach((f,i)=>setTimeout(()=>tone(f,.8,'triangle',.1),i*70)); }
+  else { tone(523,.5,'triangle',.09,784); }
+}
 function sfxBurst(r){
   noise(.6,.12,1600,.5);
   if(r==='SSR') [523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>tone(f,1.1,'triangle',.15),i*70));
