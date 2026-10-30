@@ -213,6 +213,10 @@
   #gaB10{background:linear-gradient(#fff6d8,#ffd062 52%,#d98f1c);color:#3a1f02;
     border:1px solid #ffeab0;box-shadow:0 8px 26px #d9901e4d,inset 0 1px 0 #fffdf0}
   #gaB10.lk{filter:saturate(.3)}
+  #gaRates .ur{display:inline-block;margin-bottom:3px;font-size:10.5px;font-weight:800;
+    letter-spacing:.1em;
+    background:linear-gradient(90deg,#ffe24d,#6cf07a,#4ad7ff,#a77bff,#ff5ad0);
+    -webkit-background-clip:text;background-clip:text;color:transparent}
   #gaRates{margin-top:13px;font-size:9.5px;line-height:2;opacity:.45;
     letter-spacing:.06em;text-align:center;
     padding-top:11px;border-top:1px solid #ffffff12;width:100%}
@@ -536,7 +540,8 @@
       <div class="gaRow"><span>集めたスキン</span><b id="gaDex">0 / 12</b></div>
       <button class="btn" id="gaB10">10連　900</button>
       <button class="btn ghost" id="gaB1">1回　100</button>
-      <div id="gaRates">至宝 2％　／　稀 10％　／　珍 28％　／　並 60％<br>
+      <div id="gaRates"><b class="ur">奇跡 0.001％（10万分の1）</b><br>
+        至宝 2％　／　稀 10％　／　珍 28％　／　並 60％<br>
         60連で至宝が確定。10連は珍以上が1つ以上。重なった分は果糖にもどる</div>
       <div id="gaMsg"></div>
       <div class="subBtns">
@@ -1319,6 +1324,91 @@ const GSKINS=[
     c.fillStyle='rgba(120,78,20,.75)';
     c.beginPath(); c.ellipse(x-r*.26,y-r*.04,r*.07,r*.14,0,0,TAU); c.fill();
     c.beginPath(); c.ellipse(x+r*.26,y-r*.04,r*.07,r*.14,0,0,TAU); c.fill();
+  }},
+/* ---------- UR（10万分の1） ---------- */
+ {id:'suumo',nm:'スーモ',r:'UR',d:'十万分の一。なぜここにいるのかは誰も知らない',
+  head:[150,214,86],tail:[104,176,58],glow:[160,255,110],acc:'none',
+  art:function(c,x,y,r,t){
+    /* 虹の後光 */
+    c.save(); c.globalCompositeOperation='lighter';
+    for(let i=0;i<12;i++){
+      const a=t*0.5+i/12*TAU, rr=r*(2.0+0.18*Math.sin(t*2+i));
+      const cc=hsl2rgb((i/12*360+t*90)%360,1,.62);
+      c.fillStyle='rgba('+cc[0]+','+cc[1]+','+cc[2]+',.3)';
+      c.beginPath(); c.arc(x+Math.cos(a)*rr,y+Math.sin(a)*rr*0.9,r*.16,0,TAU); c.fill();
+    }
+    const hg=hsl2rgb((t*80)%360,1,.6);
+    const gg=c.createRadialGradient(x,y,r*.6,x,y,r*2.3);
+    gg.addColorStop(0,'rgba('+hg[0]+','+hg[1]+','+hg[2]+',.32)');
+    gg.addColorStop(1,'rgba(0,0,0,0)');
+    c.fillStyle=gg; c.beginPath(); c.arc(x,y,r*2.3,0,TAU); c.fill();
+    c.restore();
+    /* 頭のふさふさ（輪郭をもこもこにする） */
+    const bump=(rad,col)=>{
+      c.fillStyle=col; c.beginPath();
+      for(let i=0;i<=44;i++){
+        const a=i/44*TAU;
+        const w=rad*(1+0.075*Math.sin(a*11+t*1.6)+0.045*Math.sin(a*19-t*2.1));
+        const X=x+Math.cos(a)*w*0.98, Y=y+Math.sin(a)*w*1.02;
+        i?c.lineTo(X,Y):c.moveTo(X,Y);
+      }
+      c.closePath(); c.fill();
+    };
+    bump(r*1.12,'rgba(72,128,40,.9)');
+    const g2=c.createRadialGradient(x-r*.3,y-r*.38,r*.08,x,y+r*.15,r*1.2);
+    g2.addColorStop(0,'#d6f29a'); g2.addColorStop(.42,'#9ad35a');
+    g2.addColorStop(.78,'#5f9c32'); g2.addColorStop(1,'#35641a');
+    c.save();
+    c.beginPath();
+    for(let i=0;i<=44;i++){
+      const a=i/44*TAU;
+      const w=r*1.02*(1+0.06*Math.sin(a*11+t*1.6)+0.035*Math.sin(a*19-t*2.1));
+      const X=x+Math.cos(a)*w*0.98, Y=y+Math.sin(a)*w*1.02;
+      i?c.lineTo(X,Y):c.moveTo(X,Y);
+    }
+    c.closePath(); c.fillStyle=g2; c.fill(); c.clip();
+    /* 苔のつぶ */
+    for(let i=0;i<26;i++){
+      const a=hash(i,3)*TAU, d=Math.sqrt(hash(i,7))*r*0.95;
+      c.fillStyle=i%3?'rgba(60,110,30,.35)':'rgba(214,246,160,.4)';
+      c.beginPath(); c.arc(x+Math.cos(a)*d,y+Math.sin(a)*d,r*(0.035+hash(i,11)*0.045),0,TAU);
+      c.fill();
+    }
+    c.restore();
+    /* 葉っぱ */
+    for(let i=-1;i<=1;i++){
+      const sw=Math.sin(t*2.2+i)*0.18;
+      c.save(); c.translate(x+i*r*.22,y-r*1.02); c.rotate(i*0.5+sw);
+      c.fillStyle='#6fb33c';
+      c.beginPath();
+      c.moveTo(0,0); c.quadraticCurveTo(r*.22,-r*.3,0,-r*.56);
+      c.quadraticCurveTo(-r*.22,-r*.3,0,0); c.closePath(); c.fill();
+      c.strokeStyle='rgba(40,80,20,.5)'; c.lineWidth=r*.025;
+      c.beginPath(); c.moveTo(0,-r*.04); c.lineTo(0,-r*.5); c.stroke();
+      c.restore();
+    }
+    /* 目 */
+    [-1,1].forEach(sd=>{
+      c.fillStyle='#17210d';
+      c.beginPath(); c.ellipse(x+sd*r*.33,y-r*.2,r*.14,r*.19,0,0,TAU); c.fill();
+      c.fillStyle='#fff';
+      c.beginPath(); c.arc(x+sd*r*.33-r*.05,y-r*.27,r*.055,0,TAU); c.fill();
+      c.fillStyle='rgba(255,255,255,.5)';
+      c.beginPath(); c.arc(x+sd*r*.33+r*.04,y-r*.14,r*.025,0,TAU); c.fill();
+    });
+    /* 口 */
+    c.fillStyle='#2a1410';
+    c.beginPath();
+    c.moveTo(x-r*.38,y+r*.18);
+    c.quadraticCurveTo(x,y+r*.86,x+r*.38,y+r*.18);
+    c.quadraticCurveTo(x,y+r*.3,x-r*.38,y+r*.18);
+    c.closePath(); c.fill();
+    c.fillStyle='#e8718a';
+    c.beginPath(); c.ellipse(x,y+r*.52,r*.17,r*.12,0,0,TAU); c.fill();
+    /* ほっぺ */
+    c.fillStyle='rgba(255,140,150,.35)';
+    c.beginPath(); c.ellipse(x-r*.72,y+r*.18,r*.16,r*.1,0,0,TAU); c.fill();
+    c.beginPath(); c.ellipse(x+r*.72,y+r*.18,r*.16,r*.1,0,0,TAU); c.fill();
   }}
 ];
 GSKINS.forEach(g=>{ g.gacha=true; g.cd='ガチャでしか出ない'; g.need=null; SKINS.push(g); });
@@ -3892,8 +3982,28 @@ const GR={
   SR :{nm:'稀',  s:'SR', c:['#eec4ff','#9a53d6'], bg:'#241439', w:10, back:80,
        tx:[[0,'#fdf2ff'],[.42,'#e2b6ff'],[.54,'#7c33c6'],[.78,'#c98ff0'],[1,'#f6e2ff']]},
   SSR:{nm:'至宝',s:'SSR',c:['#fff0bd','#ff8a2e'], bg:'#3d2206', w: 2, back:200,
-       tx:[[0,'#fffdf2'],[.36,'#ffe79a'],[.52,'#d9801a'],[.68,'#ffd96e'],[.86,'#b85f10'],[1,'#fff6cf']]}
+       tx:[[0,'#fffdf2'],[.36,'#ffe79a'],[.52,'#d9801a'],[.68,'#ffd96e'],[.86,'#b85f10'],[1,'#fff6cf']]},
+  /* 10万分の1。普通の抽選の輪には入れず、先に別で引く */
+  UR :{nm:'奇跡',s:'UR', c:['#ffffff','#ff5ad0'], bg:'#1b0a2e', w: 0, back:1000,
+       tx:[[0,'#ffffff'],[.2,'#ffe24d'],[.4,'#6cf07a'],[.6,'#4ad7ff'],[.8,'#a77bff'],[1,'#ff5ad0']]}
 };
+const UR_ODDS=1/100000;
+function hsl2rgb(h,sa,l){
+  const a=sa*Math.min(l,1-l);
+  const f=k=>{ const q=(k+h/30)%12;
+    return Math.round(255*(l-a*Math.max(-1,Math.min(q-3,Math.min(9-q,1))))); };
+  return [f(0),f(8),f(4)];
+}
+/* UR の字と光は時間で色が回る */
+function rTx(rk){
+  if(rk!=='UR') return GR[rk].tx;
+  const o=(time*0.3)%1, st=[];
+  for(let i=0;i<=6;i++){
+    const p=i/6, c2=hsl2rgb(((p*0.9+o)*360)%360,1,0.66);
+    st.push([p,'rgb('+c2[0]+','+c2[1]+','+c2[2]+')']);
+  }
+  return st;
+}
 /* 字は「影→太い縁→グラデ→上半分のつや→細い光→走るつや」の順に重ねる */
 function gText(c,txt,x,y,size,stops,o){
   o=o||{};
@@ -3934,6 +4044,11 @@ const gsCount=()=>GPOOL().reduce((n,s)=>n+(gsHave(s.id)?1:0),0);
 
 function gaRoll(force){
   let rk;
+  /* まず10万分の1を引く。天井の確定枠では出さない */
+  if(!force && Math.random()<UR_ODDS){
+    const u=GPOOL().filter(x=>x.r==='UR');
+    if(u.length) return u[Math.floor(Math.random()*u.length)];
+  }
   if(force) rk='SSR';
   else {
     let r=Math.random()*100, acc=0; rk='N';
@@ -3964,7 +4079,7 @@ function gaPull(n){
   }
   SV.pulls=(SV.pulls||0)+n;
   /* 新しく出たいちばん良いものを着る */
-  const ord={N:0,R:1,SR:2,SSR:3};
+  const ord={N:0,R:1,SR:2,SSR:3,UR:4};
   let pick=null;
   out.forEach(o=>{ if(o.neu && (!pick||ord[o.m.r]>ord[pick.r])) pick=o.m; });
   if(pick){ SKIN=pick; SV.skin=pick.id; }
@@ -3981,9 +4096,10 @@ const GA_PH={in:0.55, spin:1.75, crack:0.62, pop:0.42, hero:1.15};
 function gaShow(out){
   GA.res=out; GA.ph='in'; GA.t=0; GA.flip=0; GA.ang=0; GA.spin=0; GA.shk=0;
   GA.spark.length=0; GA.frag.length=0; GA.cracks.length=0;
-  const ord={N:0,R:1,SR:2,SSR:3};
+  const ord={N:0,R:1,SR:2,SSR:3,UR:4};
   GA.best='N'; GA.hero=out[0].m;
   out.forEach(o=>{ if(ord[o.m.r]>ord[GA.best]){ GA.best=o.m.r; GA.hero=o.m; } });
+  GA.spinDur = GA.best==='UR' ? 3.2 : GA_PH.spin;
   /* ひびの形は先に決めておく */
   for(let i=0;i<7;i++){
     const a=i/7*TAU+Math.random()*0.5, seg=[];
@@ -4006,12 +4122,17 @@ function gaUpdate(dt){
   if(P==='in'){
     if(GA.t>=GA_PH.in){ gaNext('spin'); sfxSpin(); }
   } else if(P==='spin'){
-    const u=GA.t/GA_PH.spin;
-    GA.spin=lerp(2.5,44,Math.pow(u,1.7));
+    const D=GA.spinDur||GA_PH.spin, u=GA.t/D;
+    GA.spin=lerp(2.5,GA.best==='UR'?62:44,Math.pow(u,1.7));
     GA.ang+=GA.spin*dt;
-    GA.shk=Math.max(GA.shk,u*u*5);
+    GA.shk=Math.max(GA.shk,u*u*(GA.best==='UR'?9:5));
     if(Math.random()<dt*u*10) sfxRattle();
-    if(GA.t>=GA_PH.spin){ gaNext('crack'); sfxCrack(); }
+    if(GA.best==='UR'&&Math.random()<dt*u*9){
+      const a=Math.random()*TAU, v=rnd(200,700);
+      GA.spark.push({x:W*.5,y:H*.46,vx:Math.cos(a)*v,vy:Math.sin(a)*v,
+        life:rnd(.3,.8),max:.8,r:rnd(1.5,4)});
+    }
+    if(GA.t>=D){ gaNext('crack'); sfxCrack(); }
   } else if(P==='crack'){
     const u=GA.t/GA_PH.crack;
     GA.spin=lerp(44,12,u);
@@ -4022,6 +4143,9 @@ function gaUpdate(dt){
       gaNext('pop'); flashWhite=1; GA.shk=24;
       sfxBurst(GA.best); shockwave(gaRGB(GA.best),1.5);
       setTimeout(()=>shockwave(gaRGB(GA.best),1.1),120);
+      if(GA.best==='UR'){
+        for(let k=1;k<=5;k++) setTimeout(()=>shockwave(gaRGB('UR'),1.4),k*150);
+      }
       for(let i=0;i<14;i++){
         const a=i/14*TAU+rnd(-.2,.2), v=rnd(420,1100);
         GA.frag.push({x:0,y:0,vx:Math.cos(a)*v,vy:Math.sin(a)*v-180,
@@ -4080,7 +4204,10 @@ function gaClose(){
   $('gaBtns').classList.remove('on');
   state='title'; screens('scTitle'); openPanel('pGacha');
 }
-const gaRGB=r=>({N:'220,232,245',R:'150,210,255',SR:'220,160,255',SSR:'255,214,120'})[r];
+function gaRGB(r){
+  if(r==='UR') return hsl2rgb((time*120)%360,1,0.64).join(',');
+  return {N:'220,232,245',R:'150,210,255',SR:'220,160,255',SSR:'255,214,120'}[r];
+}
 
 /* --- 金のカプセル --- */
 function gaCapsule(cx,cy,R,ang,crack,blur){
@@ -4241,7 +4368,7 @@ function gaRender(){
   const cx=W*.5, cy=H*.46, R=Math.min(W,H)*0.17;
 
   /* 背の光芒 */
-  const beam = P==='in'?0.25 : P==='spin'?0.3+GA.t/GA_PH.spin*0.6
+  const beam = P==='in'?0.25 : P==='spin'?0.3+GA.t/(GA.spinDur||GA_PH.spin)*0.6
              : P==='crack'?0.9+GA.t : 1.6;
   ctx.save(); ctx.globalCompositeOperation='lighter';
   for(let i=0;i<22;i++){
@@ -4261,8 +4388,8 @@ function gaRender(){
       yy=cy-(1-u)*H*0.55; rr=R*(0.7+0.3*u);
       if(u>0.86) rr=R*(1+ (1-(u-0.86)/0.14)*0.0);
     } else if(P==='spin'){
-      const u=GA.t/GA_PH.spin;
-      yy=cy-Math.sin(u*Math.PI)*R*0.22;
+      const u=GA.t/(GA.spinDur||GA_PH.spin);
+      yy=cy-Math.sin(Math.min(1,u)*Math.PI)*R*0.22;
       rr=R*(1+0.05*Math.sin(GA.t*22));
     } else {
       const u=GA.t/GA_PH.crack;
@@ -4297,10 +4424,12 @@ function gaRender(){
       bg2.addColorStop(1,'rgba('+col+',0)');
       ctx.fillStyle=bg2; ctx.fillRect(cx-R*2.4,cy-R*2.28,R*4.8,R*0.62);
       ctx.restore();
-      gText(ctx,G.s,cx,cy-R*1.86,R*0.56,G.tx,
+      const TX=rTx(GA.best);
+      gText(ctx,G.s,cx,cy-R*1.86,R*(GA.best==='UR'?0.66:0.56),TX,
         {sheen:GA.best!=='N',font:'sans-serif',ew:0.2,
          rim:'rgba(255,255,255,.6)'});
-      gText(ctx,GA.hero.nm,cx,cy+R*1.92,R*0.52,G.tx,{sheen:GA.best!=='N'});
+      gText(ctx,GA.hero.nm,cx,cy+R*1.92,R*(GA.best==='UR'?0.62:0.52),TX,
+        {sheen:GA.best!=='N'});
       ctx.textAlign='center';
       ctx.fillStyle='rgba(255,250,240,.66)';
       ctx.font='600 '+Math.round(R*0.175)+'px sans-serif';
@@ -4371,8 +4500,15 @@ function gaCard(cx,cy,w,h,o,open,ap){
   ctx.globalAlpha=Math.max(0.15,ap);
   /* 外わく（金属のふち） */
   const fg=ctx.createLinearGradient(-w/2,-h/2,w/2,h/2);
-  fg.addColorStop(0,R.c[0]); fg.addColorStop(.42,R.c[1]);
-  fg.addColorStop(.58,R.c[0]); fg.addColorStop(1,R.c[1]);
+  if(o.m.r==='UR'){
+    for(let k=0;k<=6;k++){
+      const c2=hsl2rgb(((k/6*0.9+(time*0.3)%1)*360)%360,1,0.66);
+      fg.addColorStop(k/6,'rgb('+c2[0]+','+c2[1]+','+c2[2]+')');
+    }
+  } else {
+    fg.addColorStop(0,R.c[0]); fg.addColorStop(.42,R.c[1]);
+    fg.addColorStop(.58,R.c[0]); fg.addColorStop(1,R.c[1]);
+  }
   rrect(ctx,-w/2,-h/2,w,h,w*0.09);
   ctx.shadowColor='rgba(0,0,0,.6)'; ctx.shadowBlur=w*0.14; ctx.shadowOffsetY=w*0.04;
   ctx.fillStyle=fg; ctx.fill(); ctx.shadowBlur=0; ctx.shadowOffsetY=0;
@@ -4419,10 +4555,11 @@ function gaCard(cx,cy,w,h,o,open,ap){
     ctx.closePath(); ctx.fill(); ctx.restore();
   });
   /* 等級 */
-  gText(ctx,R.s,-w*0.20,-h*0.325,w*0.155,R.tx,
+  const TX=rTx(o.m.r);
+  gText(ctx,R.s,-w*0.20,-h*0.325,w*0.155,TX,
     {sheen:o.m.r!=='N',font:'sans-serif',ew:0.22,align:'center'});
   /* 名まえ */
-  gText(ctx,o.m.nm,0,h*0.30,w*0.16,R.tx,{ew:0.2});
+  gText(ctx,o.m.nm,0,h*0.30,w*0.16,TX,{ew:0.2});
   ctx.textAlign='center';
   ctx.fillStyle=o.neu?'rgba(255,236,150,.95)':'rgba(255,255,255,.5)';
   ctx.font='700 '+Math.round(w*0.085)+'px sans-serif';
@@ -4570,6 +4707,11 @@ window.__seishi=window.__swim={
   },
   release:function(){ g.hold=false; },
   st:function(){ return ST; },          /* ストーリーの中身（動作確認用） */
+  /* ガチャの演出だけ見る。__seishi.pull('suumo') など */
+  pull:function(id){
+    const m=SKINS.find(x=>x.id===id); if(!m) return 'そんなスキンはない';
+    gaShow([{m:m,neu:true,back:0}]); return m.nm;
+  },
   /* 全開放の出し入れと、位の確認用 */
   open:function(){ openAll(); paintRank(); return achCount(); },
   lock:function(){ SV.ach={}; SV.fruc=0; SV.skin='normal'; SKIN=SKINS[0];
